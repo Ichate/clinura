@@ -88,7 +88,13 @@ export const athletics = {
     send<{ set: boolean }>("/api/athletics/pin", "POST", { pin, current }),
 };
 
+export interface CameraInfoItem {
+  index: number;
+  name: string;
+}
+
 export const api = {
+  cameras: () => request<{ active: number; cameras: CameraInfoItem[] }>("/api/cameras"),
   assistant: () => request<AssistantStatus>("/api/assistant"),
   telemetry: (hours: number) => request<TelemetrySummary>(`/api/telemetry?hours=${hours}`),
   events: (hours: number) => request<ClinicalEvent[]>(`/api/events?hours=${hours}`),

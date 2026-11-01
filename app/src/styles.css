@@ -1847,3 +1847,27 @@ td[data-tone="bad"] {
   height: 30px;
   padding: 0 6px;
 }
+
+.camera-pick {
+  position: relative;
+}
+
+.camera-help {
+  position: absolute;
+  top: 38px;
+  right: 0;
+  z-index: 40;
+  width: min(360px, 90vw);
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-panel);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.camera-help ol {
+  margin: 6px 0;
+  padding-left: 18px;
+}

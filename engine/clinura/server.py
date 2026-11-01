@@ -26,6 +26,7 @@ from . import __version__
 from .assistant import Assistant, AssistantError, local_handover
 from .athletics import AthleticsStore
 from .behavior import EyeActivityTracker, MotionTracker
+from .cameras import list_cameras
 from .capture import BlackFrameError, CameraSource, CaptureError, frame_brightness
 from .config import (
     PROJECT_ROOT,
@@ -349,7 +350,7 @@ class Runtime:
         self._commands.put(("reset", None))
 
     def set_camera(self, index: int) -> None:
-        if 0 <= index <= 9:
+        if 0 <= index <= 15:
             self._requested_camera = index
 
     def exercise_command(
@@ -1067,6 +1068,13 @@ def create_app(
     @app.get("/api/health")
     def health() -> dict[str, object]:
         return runtime.health_payload()
+
+    @app.get("/api/cameras")
+    async def cameras() -> dict[str, object]:
+        found = await anyio.to_thread.run_sync(
+            lambda: list_cameras(runtime.capture_config.max_camera_index, runtime._camera_index)
+        )
+        return {"active": runtime._camera_index, "cameras": found}
 
     @app.post("/api/camera/{index}")
     def camera(index: int) -> dict[str, bool]:

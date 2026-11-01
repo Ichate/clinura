@@ -24,7 +24,7 @@ import {
   ProfilePanel,
   RecoveryPanel,
 } from "./components/Wellness";
-import { api, type AssistantStatus } from "./lib/api";
+import { api, type AssistantStatus, type CameraInfoItem } from "./lib/api";
 import type { Tone } from "./lib/types";
 import { useClinura } from "./lib/useClinura";
 import { usePoll } from "./lib/usePoll";
@@ -58,6 +58,67 @@ function engineLabel(connection: string, state: string | undefined, error: strin
   if (error || state === "camera_error" || state === "fatal") return { tone: "bad" as Tone, text: "Camera unavailable" };
   if (state === "starting" || !state) return { tone: "warn" as Tone, text: "Starting camera" };
   return { tone: "ok" as Tone, text: "Monitoring" };
+}
+
+function CameraPicker({
+  active,
+  disabled,
+  onPick,
+}: {
+  active: number;
+  disabled: boolean;
+  onPick: (index: number) => void;
+}) {
+  const [cameras, setCameras] = useState<CameraInfoItem[]>([]);
+  const [help, setHelp] = useState(false);
+  const refresh = useCallback(() => {
+    api
+      .cameras()
+      .then((r) => setCameras(r.cameras))
+      .catch(() => setCameras([]));
+  }, []);
+  useEffect(() => {
+    refresh();
+    const timer = window.setInterval(refresh, 15000);
+    return () => window.clearInterval(timer);
+  }, [refresh]);
+  const list = cameras.some((c) => c.index === active)
+    ? cameras
+    : [...cameras, { index: active, name: `Camera ${active}` }];
+  return (
+    <div className="camera-pick">
+      <select
+        value={active}
+        disabled={disabled}
+        onChange={(e) => onPick(Number(e.target.value))}
+        aria-label="Choose camera"
+      >
+        {list.map((c) => (
+          <option key={c.index} value={c.index}>
+            {c.name}
+          </option>
+        ))}
+      </select>
+      <button type="button" className="btn btn--quiet btn--small" onClick={refresh} title="Look for cameras again">
+        Refresh
+      </button>
+      <button type="button" className="btn btn--quiet btn--small" onClick={() => setHelp((v) => !v)}>
+        iPhone?
+      </button>
+      {help ? (
+        <div className="camera-help" role="note">
+          <strong>Use your iPhone as the camera (Continuity Camera)</strong>
+          <ol>
+            <li>Mac and iPhone signed in to the same Apple ID, Wi-Fi and Bluetooth on.</li>
+            <li>On the iPhone: Settings → General → AirPlay &amp; Continuity → turn on Continuity Camera.</li>
+            <li>Lock the iPhone and mount it still, rear camera facing you, near the Mac.</li>
+            <li>Press Refresh. “iPhone Camera” appears in this list. Pick it.</li>
+          </ol>
+          <p>Not showing? Plug the iPhone in with a cable, unlock once and tap Trust, then lock it and Refresh.</p>
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 function HandoverView({
@@ -172,21 +233,11 @@ export default function App() {
         </nav>
         <div className="topbar-status">
           {profile.bed ? <span className="bed">Bed {profile.bed}</span> : null}
-          <label className="camera-pick">
-            <span>Camera</span>
-            <select
-              value={metrics?.camera.index ?? 0}
-              disabled={connection !== "live"}
-              onChange={(e) => setCamera(Number(e.target.value))}
-              aria-label="Choose camera"
-            >
-              {[0, 1, 2, 3].map((i) => (
-                <option key={i} value={i}>
-                  {i === 0 ? "0 (default)" : i}
-                </option>
-              ))}
-            </select>
-          </label>
+          <CameraPicker
+            active={metrics?.camera.index ?? 0}
+            disabled={connection !== "live"}
+            onPick={setCamera}
+          />
           <span className="engine" data-tone={engine.tone} title={metrics?.error ?? undefined}>
             <span className="dot" data-tone={engine.tone} />
             {engine.text}
