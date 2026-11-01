@@ -1,5 +1,10 @@
 import type {
+  AdherenceDay,
   ChatMessage,
+  ExerciseSession,
+  ExerciseSpec,
+  Program,
+  ScheduleSlot,
   ClinicalEvent,
   HandoverResult,
   TelemetrySummary,
@@ -42,6 +47,46 @@ export interface AssistantStatus {
   configured: boolean;
   model: string;
 }
+
+let clinicianPin = "";
+export function setClinicianPin(pin: string) {
+  clinicianPin = pin;
+}
+
+function pinHeaders(): Record<string, string> {
+  return clinicianPin ? { "X-Clinician-Pin": clinicianPin } : {};
+}
+
+function send<T>(path: string, method: string, body?: unknown): Promise<T> {
+  return request<T>(path, {
+    method,
+    headers: pinHeaders(),
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+}
+
+export const athletics = {
+  library: () => request<ExerciseSpec[]>("/api/athletics/library"),
+  programs: () => request<Program[]>("/api/athletics/programs"),
+  createProgram: (data: Partial<Program>) => send<Program>("/api/athletics/programs", "POST", data),
+  updateProgram: (id: number, data: Partial<Program>) =>
+    send<Program>(`/api/athletics/programs/${id}`, "PUT", data),
+  deleteProgram: (id: number) => send<{ ok: boolean }>(`/api/athletics/programs/${id}`, "DELETE"),
+  addItem: (programId: number, data: Record<string, unknown>) =>
+    send<Program>(`/api/athletics/programs/${programId}/items`, "POST", data),
+  updateItem: (id: number, data: Record<string, unknown>) =>
+    send<{ ok: boolean }>(`/api/athletics/items/${id}`, "PUT", data),
+  deleteItem: (id: number) => send<{ ok: boolean }>(`/api/athletics/items/${id}`, "DELETE"),
+  today: () => request<ScheduleSlot[]>("/api/athletics/today"),
+  adherence: (days = 14) => request<AdherenceDay[]>(`/api/athletics/adherence?days=${days}`),
+  sessions: (days = 30) => request<ExerciseSession[]>(`/api/athletics/sessions?days=${days}`),
+  saveSession: (data: ExerciseSession) =>
+    send<{ ok: boolean; id: number }>("/api/athletics/sessions", "POST", data),
+  pinStatus: () => request<{ set: boolean }>("/api/athletics/pin"),
+  verifyPin: (pin: string) => send<{ ok: boolean }>("/api/athletics/pin/verify", "POST", { pin }),
+  changePin: (pin: string | null, current: string) =>
+    send<{ set: boolean }>("/api/athletics/pin", "POST", { pin, current }),
+};
 
 export const api = {
   assistant: () => request<AssistantStatus>("/api/assistant"),

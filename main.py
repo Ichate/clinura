@@ -51,7 +51,11 @@ def ensure_python_packages(install: bool) -> None:
 
 
 def ensure_models() -> None:
-    models = [ROOT / "models" / "face_landmarker.task", ROOT / "models" / "hand_landmarker.task"]
+    models = [
+        ROOT / "models" / "face_landmarker.task",
+        ROOT / "models" / "hand_landmarker.task",
+        ROOT / "models" / "pose_landmarker_full.task",
+    ]
     if all(path.exists() and path.stat().st_size > 1_000_000 for path in models):
         return
     log.info("Downloading MediaPipe models")

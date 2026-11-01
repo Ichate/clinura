@@ -110,3 +110,60 @@ def estimate_hr(
         power=pxx,
         used_prior=used_prior,
     )
+
+
+def band_spectrum(
+    signal: np.ndarray,
+    fs: float,
+    low_hz: float,
+    high_hz: float,
+    nfft: int = 4096,
+    segment_s: float | None = None,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Welch PSD restricted to ``[low_hz, high_hz]``.
+
+    With ``segment_s=None`` the whole window is one Hann segment (best frequency
+    resolution); otherwise segments of that length are averaged with 50% overlap.
+    """
+    x = np.asarray(signal, dtype=np.float64)
+    if x.ndim != 1 or x.size < 16 or not np.all(np.isfinite(x)):
+        raise ValueError("signal must be a finite 1-D array with at least 16 samples")
+    segment = x.size if segment_s is None else int(min(x.size, max(16, round(segment_s * fs))))
+    f, pxx = welch(
+        x,
+        fs=float(fs),
+        window="hann",
+        nperseg=segment,
+        noverlap=segment // 2,
+        nfft=max(int(nfft), segment),
+        detrend="linear",
+        scaling="density",
+    )
+    band = (f >= low_hz) & (f <= high_hz)
+    if np.count_nonzero(band) < 3:
+        raise ValueError("not enough PSD bins in the band")
+    return f[band], np.maximum(pxx[band], 0.0)
+
+
+def snr_at(
+    freqs: np.ndarray,
+    power: np.ndarray,
+    f0: float,
+    half_bandwidth_hz: float = 0.1,
+    harmonic_bandwidth_hz: float = 0.15,
+) -> float:
+    """De Haan style SNR: power around the fundamental and its first harmonic over
+    everything else in the analysed band (dB)."""
+    freqs = np.asarray(freqs, dtype=np.float64)
+    power = np.asarray(power, dtype=np.float64)
+    fundamental_mask = np.abs(freqs - f0) <= half_bandwidth_hz
+    harmonic_mask = (np.abs(freqs - 2.0 * f0) <= harmonic_bandwidth_hz) & ~fundamental_mask
+    fundamental = float(power[fundamental_mask].sum())
+    harmonic = float(power[harmonic_mask].sum())
+    # The harmonic only counts as signal up to the fundamental's own power: otherwise a
+    # candidate at half the true rate would be credited with the real pulse peak.
+    signal = fundamental + min(harmonic, fundamental)
+    noise = float(power.sum()) - signal
+    if signal <= 0:
+        return -30.0
+    return float(10.0 * np.log10(signal / max(noise, 1e-20)))

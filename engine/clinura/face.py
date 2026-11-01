@@ -14,6 +14,8 @@ from .types import FaceObservation
 
 logger = logging.getLogger(__name__)
 
+HEAD_POINTS = [1, 4, 5, 6, 8, 9, 10, 151, 168, 197, 195, 33, 133, 263, 362, 61, 291, 199, 152]
+
 
 class LandmarkSmoother:
     def __init__(self, alpha: float = 0.55) -> None:
@@ -89,6 +91,10 @@ class FaceTracker:
 
         smoothed = self._smoother.update(landmarks)
         observation = build_rois(frame_bgr, smoothed, self.config)
+        # Head position from many raw landmarks (jitter averages out): used for motion
+        # suppression and the breathing (head rise/fall) signal.
+        head = landmarks[HEAD_POINTS, :2].mean(axis=0)
+        observation.head_xy = (float(head[0] * width), float(head[1] * height))
         blink_left, blink_right = self._extract_blinks(result)
         observation.blink_left = blink_left
         observation.blink_right = blink_right

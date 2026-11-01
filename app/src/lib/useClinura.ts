@@ -103,5 +103,11 @@ export function useClinura() {
 
   const resetSignal = useCallback(() => send({ type: "reset" }), [send]);
 
-  return { metrics, hello, frame, connection, mode, setMode, resetSignal };
+  const exercise = useCallback(
+    (action: "start" | "stop", key?: string, side = "auto") =>
+      send({ type: "exercise", action, exercise: key, side }),
+    [send],
+  );
+
+  return { metrics, hello, frame, connection, mode, setMode, resetSignal, exercise };
 }

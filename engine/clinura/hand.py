@@ -101,5 +101,32 @@ class HandTracker:
             handedness=handedness,
         )
 
+    def landmarks(
+        self, frame_bgr: np.ndarray, timestamp_s: float
+    ) -> tuple[np.ndarray, np.ndarray] | None:
+        """(world 21x3 metres, image 21x3 normalized x, y, 1) for the first hand, or None."""
+        height, width = frame_bgr.shape[:2]
+        detection = frame_bgr
+        if width > self.config.detection_width:
+            scale = self.config.detection_width / float(width)
+            detection = cv2.resize(
+                frame_bgr,
+                (self.config.detection_width, max(2, int(round(height * scale)))),
+                interpolation=cv2.INTER_AREA,
+            )
+        rgb = cv2.cvtColor(detection, cv2.COLOR_BGR2RGB)
+        ts_ms = max(int(timestamp_s * 1000.0), self._last_ts_ms + 1)
+        self._last_ts_ms = ts_ms
+        result = self._landmarker.detect_for_video(
+            mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb), ts_ms
+        )
+        if not result.hand_landmarks or not result.hand_world_landmarks:
+            return None
+        image = np.asarray([[q.x, q.y, 1.0] for q in result.hand_landmarks[0]], dtype=np.float32)
+        world = np.asarray(
+            [[q.x, q.y, q.z] for q in result.hand_world_landmarks[0]], dtype=np.float32
+        )
+        return world, image
+
     def close(self) -> None:
         self._landmarker.close()

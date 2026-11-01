@@ -19,6 +19,7 @@ def _run(bpm: float, seed: int) -> float:
     for timestamp, rgb in zip(synthetic.timestamps, synthetic.rgb, strict=True):
         pipeline.set_face_status(True, 0.9, None, float(timestamp))
         pipeline.add_sample(float(timestamp), tuple(rgb), 0.9, 180.0, 800)
+        pipeline.analyze(float(timestamp))
     result = pipeline.analyze(float(synthetic.timestamps[-1]), force=True)
     assert result.bpm is not None
     return result.bpm

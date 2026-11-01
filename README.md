@@ -94,6 +94,35 @@ The AI features send a summary of the readings to DeepSeek. Video never leaves y
 Lets you try measuring from your tongue or palm instead of your face. These are experimental and
 not reliable.
 
+### Athletics
+
+Exercise plans prescribed by a physician, physiotherapist or trainer, followed with the camera.
+
+**Clinician / trainer** (switch at the top of the Athletics tab):
+
+- Create a program for a patient or athlete (who prescribed it, goal, end date).
+- Add exercises from the library (squat, sit-to-stand, lunge, push-up, biceps curl, shoulder
+  press, lateral raise, shoulder flexion, knee extension, glute bridge, high-knee march, jumping
+  jacks, plank, wall sit): sets, reps or hold time, rest, side, which weekdays, what times, an
+  optional target range of motion, a maximum heart rate and instructions.
+- Optionally set a PIN so only the clinician can change the plan.
+
+**Patient / athlete**:
+
+- **Today's plan** lists what is due, upcoming, done or missed.
+- A session runs on its own: 15 s resting heart rate → each set with live rep counting → rest timer
+  → 60 s heart-rate recovery → effort (RPE) and pain → saved.
+- The camera tracks your body (MediaPipe Pose, 3-D joint angles). Each rep is checked against the
+  full movement: half reps are not counted ("go deeper"). Each rep's range of motion and form are
+  recorded. Holds only count time while you are in position. Voice counting is optional.
+- Heart rate is read from your face between sets, because movement during a set blocks the camera
+  pulse. If it goes above the prescribed maximum, rest is extended.
+- **Progress** shows 14-day adherence and every session: reps, form, range of motion, resting and
+  peak heart rate, 1-minute recovery, effort and pain. Sessions also appear in the Handover event
+  log; pain of 7 or more is flagged.
+
+Stand 2–3 m from the camera so your whole body is visible. Most exercises read best side-on.
+
 ## Settings
 
 You can change these in `.env`:
@@ -108,4 +137,19 @@ You can change these in `.env`:
 ## Your data
 
 Everything runs on your computer. The reading history is saved in `data/telemetry.db` and kept
-for seven days. Delete that file to start fresh.
+for seven days. Exercise plans and sessions are saved in `data/athletics.db`. Delete those files
+to start fresh.
+
+## Accuracy
+
+The heart-rate engine fuses POS and CHROM pulse signals from three skin regions, suppresses
+frequencies where the head is moving, and tracks the rate over time (online Viterbi with harmonic
+checking) instead of trusting each 10-second window on its own. The displayed value is
+Kalman-smoothed, and a lock/hold state machine stops it blinking on and off. HRV beats are re-timed
+by template matching, and the timing-noise bias is removed. Breathing rate fuses four respiratory
+signals.
+
+`PYTHONPATH=engine python scripts/benchmark_realistic.py` streams realistic synthetic scenarios
+(noise, motion, exposure steps, dropped frames, bradycardia, exercise recovery). It reports
+accuracy and display stability. These are synthetic: validate against a chest strap or ECG before
+relying on the numbers.

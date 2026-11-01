@@ -58,3 +58,42 @@ def robust_clip(signal: np.ndarray, limit: float = 3.5) -> np.ndarray:
     if sigma < 1e-12:
         return x.copy()
     return np.clip(x, median - limit * sigma, median + limit * sigma)
+
+
+def chrom(rgb: np.ndarray, fs: float = 30.0, window_s: float = 1.6) -> np.ndarray:
+    """CHROM (de Haan & Jeanne 2013) with the same overlap-add windowing as ``pos``.
+
+    POS and CHROM fail in different ways (CHROM is more robust to specular changes,
+    POS to skin-tone/illumination mismatch); fusing both per region is cheap and makes
+    the fused spectrum more robust than either alone.
+    """
+    rgb = np.asarray(rgb, dtype=np.float64)
+    if rgb.ndim != 2 or rgb.shape[1] != 3 or rgb.shape[0] < 8:
+        raise ValueError("rgb must have shape (n_samples >= 8, 3)")
+    if not np.all(np.isfinite(rgb)) or np.any(rgb.std(axis=0) < 1e-8):
+        raise ValueError("RGB trace is not usable for CHROM")
+    n = rgb.shape[0]
+    length = int(np.clip(round(window_s * float(fs)), 8, n))
+    windows = np.swapaxes(sliding_window_view(rgb, length, axis=0), 1, 2)
+    means = windows.mean(axis=1, keepdims=True)
+    valid = np.all(means > 1e-6, axis=(1, 2))
+    normalized = windows / np.where(means > 1e-6, means, 1.0)
+    r, g, b = normalized[:, :, 0], normalized[:, :, 1], normalized[:, :, 2]
+    x = 3.0 * r - 2.0 * g
+    y = 1.5 * r + g - 1.5 * b
+    sx = x.std(axis=1)
+    sy = y.std(axis=1)
+    alpha = np.where(sy > 1e-12, sx / np.maximum(sy, 1e-12), 0.0)
+    h = x - alpha[:, None] * y
+    h -= h.mean(axis=1, keepdims=True)
+    h *= np.hanning(length)[None, :]
+    h[~valid] = 0.0
+    pulse = np.zeros(n, dtype=np.float64)
+    count = h.shape[0]
+    for offset in range(length):
+        pulse[offset : offset + count] += h[:, offset]
+    pulse -= pulse.mean()
+    scale = float(np.std(pulse))
+    if scale < 1e-10:
+        raise ValueError("CHROM produced a flat signal")
+    return pulse / scale

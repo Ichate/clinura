@@ -31,6 +31,7 @@ class FaceObservation:
     mean_luma: float = 0.0
     blink_left: float = 0.0
     blink_right: float = 0.0
+    head_xy: tuple[float, float] | None = None
 
     @property
     def combined_rgb(self) -> tuple[float, float, float] | None:
@@ -56,6 +57,7 @@ class SignalSample:
     roi_rgb: dict[str, tuple[float, float, float]] = field(default_factory=dict)
     roi_pixels_by_name: dict[str, int] = field(default_factory=dict)
     luma: float = 0.0
+    head_xy: tuple[float, float] | None = None
 
 
 @dataclass
@@ -97,3 +99,7 @@ class AnalysisResult:
     respiration_progress: float = 0.0
     respiration_t: np.ndarray | None = None
     respiration_y: np.ndarray | None = None
+    respiration_sources: list[dict[str, object]] = field(default_factory=list)
+    motion_level: float | None = None
+    lock_state: str = "searching"
+    hrv_quality: float | None = None

@@ -11,7 +11,7 @@ export type DisplayStatus = SignalStatus | "offline";
 
 export type EngineState = "starting" | "running" | "camera_error" | "fatal" | "stopped";
 
-export type MonitorMode = "face" | "tongue" | "palm";
+export type MonitorMode = "face" | "tongue" | "palm" | "body";
 
 export type Tone = "ok" | "warn" | "bad" | "idle" | "info";
 
@@ -116,6 +116,9 @@ export interface Metrics {
   respiration: RespirationMetrics;
   mode: MonitorMode;
   experimental: ExperimentalMetrics | null;
+  body: BodyMetrics | null;
+  lock_state?: "searching" | "locked" | "holding";
+  motion_level?: number | null;
   eye: { blink_rate: number | null; blinks: number; openness: number | null };
   stability: {
     score: number;
@@ -205,4 +208,143 @@ export interface ChatMessage {
   role: "user" | "assistant";
   content: string;
   error?: boolean;
+}
+
+export interface RepLog {
+  index: number;
+  side: string;
+  duration_s: number;
+  rom_min: number;
+  rom_max: number;
+  rom: number;
+  form_score: number;
+  issues: string[];
+}
+
+export interface ExerciseLive {
+  exercise: string;
+  kind: "reps" | "hold";
+  side: string;
+  active_side: string | null;
+  reps: number;
+  partials: number;
+  hold_s: number;
+  hold_best_s: number;
+  angle: number | null;
+  phase: string | null;
+  visible: boolean;
+  cues: string[];
+  avg_rom: number | null;
+  best_rom: number | null;
+  avg_form: number | null;
+  avg_rep_s: number | null;
+  last_rep: RepLog | null;
+  rep_log: RepLog[];
+}
+
+export interface BodyMetrics {
+  available: boolean;
+  error: string | null;
+  detected: boolean;
+  landmarks: [number, number, number][] | null;
+  skeleton: [number, number][];
+  hand?: [number, number][] | null;
+  session: ExerciseLive | null;
+}
+
+export interface ExerciseSpec {
+  key: string;
+  name: string;
+  category: string;
+  kind: "reps" | "hold";
+  source?: "pose" | "hand";
+  seated?: boolean;
+  joint: string;
+  start_angle: number;
+  target_angle: number;
+  per_side: boolean;
+  default_sets: number;
+  default_reps: number;
+  default_hold_s: number;
+  default_rest_s: number;
+  setup: string;
+  cues: string[];
+}
+
+export interface PlanItem {
+  id: number;
+  program_id: number;
+  exercise: string;
+  exercise_name: string;
+  kind: "reps" | "hold";
+  sets: number;
+  reps: number;
+  hold_s: number;
+  rest_s: number;
+  side: string;
+  days: string;
+  times: string[];
+  target_rom: number | null;
+  max_hr: number | null;
+  instructions: string | null;
+  position: number;
+}
+
+export interface Program {
+  id: number;
+  title: string;
+  patient: string | null;
+  prescriber: string | null;
+  prescriber_role: string | null;
+  goal: string | null;
+  notes: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  active: boolean;
+  items: PlanItem[];
+}
+
+export interface ScheduleSlot {
+  date: string;
+  time: string | null;
+  status: "done" | "partial" | "due" | "upcoming" | "overdue" | "missed";
+  session_id: number | null;
+  program: { id: number; title: string; prescriber: string | null; prescriber_role: string | null };
+  item: PlanItem;
+}
+
+export interface AdherenceDay {
+  date: string;
+  scheduled: number;
+  done: number;
+  partial: number;
+}
+
+export interface ExerciseSession {
+  id?: number;
+  program_id: number | null;
+  item_id: number | null;
+  exercise: string;
+  exercise_name?: string;
+  slot_date: string | null;
+  slot_time: string | null;
+  started_at: number;
+  ended_at: number;
+  sets_done: number;
+  reps_done: number;
+  reps_target: number;
+  hold_s: number | null;
+  partials: number;
+  avg_form: number | null;
+  avg_rom: number | null;
+  best_rom: number | null;
+  hr_pre: number | null;
+  hr_peak: number | null;
+  hr_post: number | null;
+  hr_recovery: number | null;
+  rpe: number | null;
+  pain: number | null;
+  notes: string | null;
+  completed: boolean;
+  detail?: unknown;
 }

@@ -9,6 +9,7 @@ import {
   SpectrumPanel,
   TrendPanel,
 } from "./components/Analysis";
+import { AthleticsView } from "./components/Athletics";
 import { CopilotPanel, EventLogPanel, HandoverPanel, OverviewPanel } from "./components/Care";
 import { Logo } from "./components/Logo";
 import { PulseStrip } from "./components/PulseStrip";
@@ -30,10 +31,11 @@ import { usePoll } from "./lib/usePoll";
 import { currentPeriod, useProfile } from "./lib/useProfile";
 import { useVitalsHistory } from "./lib/useVitalsHistory";
 
-type View = "monitor" | "handover" | "wellness" | "research";
+type View = "monitor" | "athletics" | "handover" | "wellness" | "research";
 
 const VIEWS: { value: View; label: string }[] = [
   { value: "monitor", label: "Monitor" },
+  { value: "athletics", label: "Athletics" },
   { value: "handover", label: "Handover" },
   { value: "wellness", label: "Wellness" },
   { value: "research", label: "Research" },
@@ -110,7 +112,7 @@ function HandoverView({
 }
 
 export default function App() {
-  const { metrics, hello, frame, connection, mode, setMode, resetSignal } = useClinura();
+  const { metrics, hello, frame, connection, mode, setMode, resetSignal, exercise } = useClinura();
   const { profile, update, saveBaseline, reset } = useProfile();
   const [view, setView] = useState<View>(initialView);
   const [waveWindow, setWaveWindow] = useState(5);
@@ -129,7 +131,9 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (view !== "research" && mode !== "face") setMode("face");
+    if (view === "athletics") {
+      if (mode !== "body") setMode("body");
+    } else if (view !== "research" && mode !== "face") setMode("face");
   }, [view, mode, setMode]);
 
   const selectView = useCallback(
@@ -214,6 +218,10 @@ export default function App() {
               <LightingPanel metrics={metrics} reference={lighting} skinTone={profile.skinTone} />
             </div>
           </div>
+        ) : null}
+
+        {view === "athletics" ? (
+          <AthleticsView metrics={metrics} frame={frame} connection={connection} exercise={exercise} />
         ) : null}
 
         {view === "handover" ? (

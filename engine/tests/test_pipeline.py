@@ -9,6 +9,7 @@ def _feed(pipeline: SignalPipeline, synthetic: object, quality: float = 0.85) ->
     for timestamp, rgb in zip(synthetic.timestamps, synthetic.rgb, strict=True):
         pipeline.set_face_status(True, quality, None, float(timestamp))
         pipeline.add_sample(float(timestamp), tuple(rgb), quality, 180.0, 800)
+        pipeline.analyze(float(timestamp))
 
 
 def test_pipeline_recovers_bpm_and_hrv() -> None:

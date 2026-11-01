@@ -17,27 +17,38 @@ from pathlib import Path
 import anyio
 import cv2
 import numpy as np
-from fastapi import FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, Header, HTTPException, Query, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from . import __version__
 from .assistant import Assistant, AssistantError, local_handover
+from .athletics import AthleticsStore
 from .behavior import EyeActivityTracker, MotionTracker
 from .capture import BlackFrameError, CameraSource, CaptureError, frame_brightness
-from .config import PROJECT_ROOT, CaptureConfig, FaceConfig, HandConfig, ServerConfig, SignalConfig
+from .config import (
+    PROJECT_ROOT,
+    CaptureConfig,
+    FaceConfig,
+    HandConfig,
+    PoseConfig,
+    ServerConfig,
+    SignalConfig,
+)
+from .exercise import LIBRARY, SKELETON, RepCounter
 from .experimental import ExperimentalObservation, build_tongue_roi
 from .face import FaceTracker
 from .hand import HandTracker
 from .pipeline import SignalPipeline
+from .pose import PoseObservation, PoseTracker
 from .recording import SessionRecorder
 from .telemetry import EventDetector, TelemetryStore, build_context
 from .types import AnalysisResult, FaceObservation
 
 logger = logging.getLogger(__name__)
 
-MODES = ("face", "tongue", "palm")
+MODES = ("face", "tongue", "palm", "body")
 UI_DIR = PROJECT_ROOT / "app" / "dist"
 
 STARTING = "starting"
@@ -88,6 +99,7 @@ class Runtime:
         camera_factory: Callable[[CaptureConfig], CameraSource] | None = None,
         tracker_factory: Callable[[FaceConfig], FaceTracker] | None = None,
         telemetry: TelemetryStore | None = None,
+        athletics: AthleticsStore | None = None,
     ) -> None:
         self.capture_config = capture or CaptureConfig()
         self.face_config = face or FaceConfig()
@@ -137,6 +149,15 @@ class Runtime:
         self.telemetry = telemetry or TelemetryStore(self.server_config.telemetry_path)
         self._detector = EventDetector(self.telemetry)
         self._last_telemetry = 0.0
+        # An injected in-memory telemetry store (tests) gets an in-memory plan store too.
+        self.athletics = athletics or AthleticsStore(
+            None if telemetry is not None else self.server_config.athletics_path
+        )
+        self._pose_tracker: PoseTracker | None = None
+        self._pose_error: str | None = None
+        self._pose: PoseObservation | None = None
+        self._counter: RepCounter | None = None
+        self._hand_image: np.ndarray | None = None
 
     @property
     def error(self) -> str | None:
@@ -176,6 +197,9 @@ class Runtime:
         if self._hand_tracker is not None:
             self._hand_tracker.close()
             self._hand_tracker = None
+        if self._pose_tracker is not None:
+            self._pose_tracker.close()
+            self._pose_tracker = None
         self._detector.close_all()
         self.telemetry.flush()
         self._started = False
@@ -303,6 +327,14 @@ class Runtime:
     def reset(self) -> None:
         self._commands.put(("reset", None))
 
+    def exercise_command(
+        self, action: str, exercise: str | None = None, side: str = "auto"
+    ) -> None:
+        if action == "start" and exercise in LIBRARY:
+            self._commands.put(("exercise_start", f"{exercise}:{side}"))
+        elif action == "stop":
+            self._commands.put(("exercise_stop", None))
+
     def _apply_commands(self) -> None:
         while True:
             try:
@@ -313,8 +345,26 @@ class Runtime:
                 self._reset_signal_state()
             elif command == "mode" and value is not None and value != self._mode:
                 self._switch_mode(value)
+            elif command == "exercise_start" and value is not None:
+                key, _, side = value.partition(":")
+                with self._lock:
+                    self._counter = RepCounter(key, side or "auto")
+            elif command == "exercise_stop":
+                with self._lock:
+                    self._counter = None
 
     def _switch_mode(self, mode: str) -> None:
+        if mode == "body" and self._pose_tracker is None:
+            try:
+                self._pose_tracker = PoseTracker(PoseConfig())
+                self._pose_error = None
+            except Exception as exc:
+                logger.exception("Pose landmarker initialization failed")
+                self._pose_error = f"Body tracking unavailable: {exc}. Run `make model`."
+        if mode != "body":
+            with self._lock:
+                self._pose = None
+                self._counter = None
         if mode == "palm" and self._hand_tracker is None:
             try:
                 self._hand_tracker = HandTracker(HandConfig())
@@ -401,6 +451,7 @@ class Runtime:
                 observation.roi_pixels,
                 roi_rgb={name: roi.mean_rgb for name, roi in usable.items()},
                 roi_pixels_by_name={name: roi.pixel_count for name, roi in usable.items()},
+                head_xy=observation.head_xy,
             )
 
         if self._recorder is not None:
@@ -413,6 +464,36 @@ class Runtime:
 
         self._pipeline.analyze(timestamp)
         experimental = self._process_experimental(frame, timestamp, observation)
+        if self._mode == "body" and self._pose_tracker is not None:
+            try:
+                pose = self._pose_tracker.detect(frame, timestamp)
+            except Exception:
+                logger.exception("Pose tracking failed")
+                pose = PoseObservation(detected=False, timestamp=timestamp)
+            with self._lock:
+                self._pose = pose
+                counter = self._counter
+            if counter is not None and counter.exercise.source == "hand":
+                if self._hand_tracker is None:
+                    try:
+                        self._hand_tracker = HandTracker(HandConfig())
+                    except Exception:
+                        logger.exception("Hand landmarker initialization failed")
+                hand = None
+                if self._hand_tracker is not None:
+                    try:
+                        hand = self._hand_tracker.landmarks(frame, timestamp)
+                    except Exception:
+                        logger.exception("Hand tracking failed")
+                with self._lock:
+                    self._hand_image = None if hand is None else hand[1]
+                counter.update_hand(None if hand is None else hand[0], timestamp)
+            elif counter is not None:
+                counter.update(
+                    pose.world if pose.detected else None,
+                    pose.image if pose.detected else None,
+                    timestamp,
+                )
 
         if observation.detected:
             eye = self._eye_tracker.update(
@@ -468,7 +549,7 @@ class Runtime:
         self, frame: np.ndarray, timestamp: float, observation: FaceObservation
     ) -> ExperimentalObservation | None:
         mode = self._mode
-        if mode == "face":
+        if mode in ("face", "body"):
             return None
         if mode == "tongue":
             if observation.detected and observation.pose_ok and observation.landmarks is not None:
@@ -742,7 +823,10 @@ class Runtime:
                 "ibi_times": ibi_times,
                 "ibis_ms": ibis_ms,
             },
+            "lock_state": result.lock_state,
+            "motion_level": _number(result.motion_level, 4),
             "respiration": {
+                "sources": result.respiration_sources,
                 "bpm": _number(result.respiration_bpm, 1),
                 "snr_db": _number(result.respiration_snr_db, 2),
                 "ready": bool(result.respiration_ready),
@@ -751,6 +835,32 @@ class Runtime:
                 "y": respiration_y,
             },
             "experimental": self._experimental_payload(snapshot) if engine_ok else None,
+            "body": self._body_payload() if engine_ok and snapshot.mode == "body" else None,
+        }
+
+    def _body_payload(self) -> dict[str, object]:
+        with self._lock:
+            pose = self._pose
+            counter = self._counter
+        landmarks = None
+        if pose is not None and pose.detected and pose.image is not None:
+            landmarks = [
+                [round(float(x), 4), round(float(y), 4), round(float(v), 2)]
+                for x, y, v in pose.image
+            ]
+        with self._lock:
+            hand_image = self._hand_image
+        hand = None
+        if counter is not None and counter.exercise.source == "hand" and hand_image is not None:
+            hand = [[round(float(x), 4), round(float(y), 4)] for x, y, _ in hand_image]
+        return {
+            "hand": hand,
+            "available": self._pose_tracker is not None,
+            "error": self._pose_error,
+            "detected": bool(pose is not None and pose.detected),
+            "landmarks": landmarks,
+            "skeleton": SKELETON,
+            "session": counter.summary() if counter is not None else None,
         }
 
     def _experimental_payload(self, snapshot: Snapshot) -> dict[str, object] | None:
@@ -994,6 +1104,8 @@ def create_app(
             raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
         return {"answer": answer, "model": copilot.config.model}
 
+    register_athletics_routes(app, runtime)
+
     @app.websocket("/ws")
     async def websocket_endpoint(websocket: WebSocket) -> None:
         await websocket.accept()
@@ -1025,6 +1137,12 @@ def create_app(
                     runtime.set_mode(str(message.get("mode", "face")))
                 elif kind == "reset":
                     runtime.reset()
+                elif kind == "exercise":
+                    runtime.exercise_command(
+                        str(message.get("action", "")),
+                        str(message.get("exercise")) if message.get("exercise") else None,
+                        str(message.get("side") or "auto"),
+                    )
 
         try:
             await websocket.send_text(json.dumps(runtime.hello_payload(), allow_nan=False))
@@ -1063,3 +1181,203 @@ def create_app(
             }
 
     return app
+
+
+class ProgramIn(BaseModel):
+    title: str = Field(min_length=1, max_length=120)
+    patient: str | None = Field(default=None, max_length=80)
+    prescriber: str | None = Field(default=None, max_length=80)
+    prescriber_role: str | None = Field(default=None, max_length=40)
+    goal: str | None = Field(default=None, max_length=300)
+    notes: str | None = Field(default=None, max_length=1000)
+    start_date: str | None = Field(default=None, max_length=10)
+    end_date: str | None = Field(default=None, max_length=10)
+    active: bool = True
+
+
+class ItemIn(BaseModel):
+    exercise: str
+    sets: int | None = Field(default=None, ge=1, le=20)
+    reps: int | None = Field(default=None, ge=1, le=200)
+    hold_s: int | None = Field(default=None, ge=0, le=600)
+    rest_s: int | None = Field(default=None, ge=0, le=900)
+    side: str = "auto"
+    days: list[int] | str = Field(default="1111111")
+    times: list[str] | str = Field(default_factory=list)
+    target_rom: float | None = Field(default=None, ge=0, le=180)
+    max_hr: float | None = Field(default=None, ge=60, le=220)
+    instructions: str | None = Field(default=None, max_length=500)
+    position: int = 0
+
+
+class SessionIn(BaseModel):
+    program_id: int | None = None
+    item_id: int | None = None
+    exercise: str
+    slot_date: str | None = None
+    slot_time: str | None = None
+    started_at: float | None = None
+    ended_at: float | None = None
+    sets_done: int = 0
+    reps_done: int = 0
+    reps_target: int = 0
+    hold_s: float | None = None
+    partials: int = 0
+    avg_form: float | None = None
+    avg_rom: float | None = None
+    best_rom: float | None = None
+    hr_pre: float | None = None
+    hr_peak: float | None = None
+    hr_post: float | None = None
+    hr_recovery: float | None = None
+    rpe: float | None = Field(default=None, ge=0, le=10)
+    pain: float | None = Field(default=None, ge=0, le=10)
+    notes: str | None = Field(default=None, max_length=1000)
+    completed: bool = True
+    detail: dict[str, object] | list[object] | None = None
+
+
+class PinIn(BaseModel):
+    pin: str | None = Field(default=None, max_length=32)
+    current: str | None = Field(default=None, max_length=32)
+
+
+def register_athletics_routes(app: FastAPI, runtime: Runtime) -> None:
+    store = runtime.athletics
+
+    def require_clinician(pin: str | None) -> None:
+        if not store.check_pin(pin):
+            raise HTTPException(
+                status_code=403, detail="Clinician PIN required to change the plan."
+            )
+
+    def bad_request(exc: Exception) -> HTTPException:
+        return HTTPException(status_code=400, detail=str(exc))
+
+    @app.get("/api/athletics/library")
+    def library() -> list[dict[str, object]]:
+        return [exercise.to_dict() for exercise in LIBRARY.values()]
+
+    @app.get("/api/athletics/pin")
+    def pin_status() -> dict[str, bool]:
+        return {"set": store.pin_set()}
+
+    @app.post("/api/athletics/pin/verify")
+    def pin_verify(body: PinIn) -> dict[str, bool]:
+        return {"ok": store.check_pin(body.pin)}
+
+    @app.post("/api/athletics/pin")
+    def pin_change(body: PinIn) -> dict[str, bool]:
+        require_clinician(body.current)
+        store.set_pin(body.pin)
+        return {"set": store.pin_set()}
+
+    @app.get("/api/athletics/programs")
+    def programs() -> list[dict[str, object]]:
+        return _clean(store.programs())
+
+    @app.post("/api/athletics/programs")
+    def create_program(
+        body: ProgramIn, x_clinician_pin: str | None = Header(default=None)
+    ) -> dict[str, object]:
+        require_clinician(x_clinician_pin)
+        program_id = store.create_program(body.model_dump())
+        return _clean(store.program(program_id) or {})
+
+    @app.put("/api/athletics/programs/{program_id}")
+    def update_program(
+        program_id: int, body: ProgramIn, x_clinician_pin: str | None = Header(default=None)
+    ) -> dict[str, object]:
+        require_clinician(x_clinician_pin)
+        if not store.update_program(program_id, body.model_dump()):
+            raise HTTPException(status_code=404, detail="Program not found.")
+        return _clean(store.program(program_id) or {})
+
+    @app.delete("/api/athletics/programs/{program_id}")
+    def delete_program(
+        program_id: int, x_clinician_pin: str | None = Header(default=None)
+    ) -> dict[str, bool]:
+        require_clinician(x_clinician_pin)
+        return {"ok": store.delete_program(program_id)}
+
+    @app.post("/api/athletics/programs/{program_id}/items")
+    def add_item(
+        program_id: int, body: ItemIn, x_clinician_pin: str | None = Header(default=None)
+    ) -> dict[str, object]:
+        require_clinician(x_clinician_pin)
+        try:
+            store.add_item(program_id, body.model_dump())
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail="Program not found.") from exc
+        except ValueError as exc:
+            raise bad_request(exc) from exc
+        return _clean(store.program(program_id) or {})
+
+    @app.put("/api/athletics/items/{item_id}")
+    def update_item(
+        item_id: int, body: ItemIn, x_clinician_pin: str | None = Header(default=None)
+    ) -> dict[str, bool]:
+        require_clinician(x_clinician_pin)
+        try:
+            ok = store.update_item(item_id, body.model_dump())
+        except ValueError as exc:
+            raise bad_request(exc) from exc
+        if not ok:
+            raise HTTPException(status_code=404, detail="Exercise not found.")
+        return {"ok": True}
+
+    @app.delete("/api/athletics/items/{item_id}")
+    def delete_item(
+        item_id: int, x_clinician_pin: str | None = Header(default=None)
+    ) -> dict[str, bool]:
+        require_clinician(x_clinician_pin)
+        return {"ok": store.delete_item(item_id)}
+
+    @app.get("/api/athletics/today")
+    def today(day: str | None = Query(default=None)) -> list[dict[str, object]]:
+        try:
+            target = datetime.strptime(day, "%Y-%m-%d").date() if day else datetime.now().date()
+        except ValueError as exc:
+            raise bad_request(exc) from exc
+        return _clean(store.schedule(target))
+
+    @app.get("/api/athletics/adherence")
+    def adherence(days: int = Query(default=14, ge=1, le=90)) -> list[dict[str, object]]:
+        return store.adherence(days)
+
+    @app.get("/api/athletics/sessions")
+    def sessions(days: float = Query(default=30, ge=0.1, le=365)) -> list[dict[str, object]]:
+        return _clean(store.sessions(days))
+
+    @app.post("/api/athletics/sessions")
+    def add_session(body: SessionIn) -> dict[str, object]:
+        try:
+            session_id = store.add_session(body.model_dump())
+        except ValueError as exc:
+            raise bad_request(exc) from exc
+        exercise = LIBRARY[body.exercise]
+        amount = (
+            f"{round(body.hold_s or 0)} s hold"
+            if exercise.kind == "hold"
+            else f"{body.reps_done}/{body.reps_target or body.reps_done} reps"
+        )
+        detail_bits = [amount, f"{body.sets_done} sets"]
+        if body.avg_form is not None:
+            detail_bits.append(f"form {round(body.avg_form)}%")
+        if body.hr_peak is not None:
+            detail_bits.append(f"peak HR {round(body.hr_peak)}")
+        if body.pain is not None:
+            detail_bits.append(f"pain {body.pain:g}/10")
+        try:
+            runtime.telemetry.add_event(
+                "exercise",
+                "warning" if (body.pain or 0) >= 7 else "info",
+                f"Exercise: {exercise.name}" + ("" if body.completed else " (stopped early)"),
+                detail=", ".join(detail_bits),
+                ts=body.started_at,
+                end_ts=body.ended_at or time.time(),
+                source="manual",
+            )
+        except Exception:
+            logger.exception("Could not log exercise event")
+        return {"ok": True, "id": session_id}

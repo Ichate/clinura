@@ -32,6 +32,7 @@ def test_pipeline_emits_live_analysis_features() -> None:
             roi_rgb={"forehead": forehead, "right_cheek": right, "left_cheek": left},
             roi_pixels_by_name={"forehead": 5000, "right_cheek": 5000, "left_cheek": 5000},
         )
+        pipeline.analyze(float(timestamp))
 
     result = pipeline.analyze(float(synthetic.timestamps[-1]), force=True)
 

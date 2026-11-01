@@ -6,6 +6,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 MODEL_PATH = PROJECT_ROOT / "models" / "face_landmarker.task"
 HAND_MODEL_PATH = PROJECT_ROOT / "models" / "hand_landmarker.task"
+POSE_MODEL_PATH = PROJECT_ROOT / "models" / "pose_landmarker_full.task"
 DATA_DIR = PROJECT_ROOT / "data"
 SESSION_DIR = DATA_DIR / "sessions"
 
@@ -56,45 +57,109 @@ class HandConfig:
 
 
 @dataclass(frozen=True)
+class PoseConfig:
+    model_path: Path = POSE_MODEL_PATH
+    detection_width: int = 960
+    min_detection_confidence: float = 0.5
+    min_presence_confidence: float = 0.5
+    min_tracking_confidence: float = 0.5
+
+
+@dataclass(frozen=True)
 class SignalConfig:
+    # Windows
     hr_window_s: float = 10.0
     hrv_window_s: float = 60.0
     min_hr_window_s: float = 8.0
     min_hrv_window_s: float = 30.0
-    band_low_hz: float = 0.75
-    band_high_hz: float = 2.8
-    filter_order: int = 3
-    welch_nperseg: int = 256
-    welch_nfft: int = 4096
-    peak_prominence_std: float = 0.25
-    min_ibi_s: float = 0.33
-    max_ibi_s: float = 1.5
-    max_ibi_deviation: float = 0.20
-    min_valid_ibis: int = 8
     max_gap_s: float = 0.5
     analysis_interval_s: float = 0.0667
-    min_snr_db: float = 0.0
-    good_snr_db: float = 3.0
-    provisional_min_snr_db: float = -8.0
-    bpm_smoothing: int = 9
-    hrv_smoothing: int = 3
-    hrv_interval_s: float = 1.0
-    respiration_window_s: float = 45.0
-    min_respiration_window_s: float = 20.0
-    respiration_interval_s: float = 1.0
-    respiration_low_hz: float = 0.1
-    respiration_high_hz: float = 0.5
-    respiration_min_snr_db: float = 0.0
     min_sample_quality: float = 0.08
+    reset_after_loss_s: float = 2.0
+
+    # Heart-rate search range (Hz). 0.65-3.5 Hz = 39-210 BPM, wide enough for
+    # athletes at rest and for hard exercise.
+    band_low_hz: float = 0.65
+    band_high_hz: float = 3.5
+    # Pulse band-pass; wider than the search range so the first harmonic survives
+    # (needed for the de Haan SNR and harmonic-aware tracking).
+    filter_low_hz: float = 0.55
+    filter_high_hz: float = 4.0
+    filter_order: int = 3
+    spectrum_high_hz: float = 4.0
+    welch_nfft: int = 4096
+    # Kept for estimate_hr callers (experimental pipeline, scripts).
+    welch_nperseg: int = 256
+
+    # Rgb -> pulse
     pos_window_s: float = 1.6
     artifact_clip_sigma: float = 3.5
     fuse_rois: bool = True
-    fusion_min_snr_db: float = -6.0
-    prior_tolerance_hz: float = 0.13
-    prior_min_relative_power: float = 0.5
-    max_prior_overrides: int = 30
+    use_chrom: bool = True
+    channel_weight_tau_s: float = 3.0
+
+    # Tracking and display smoothing
+    tracker_drift_bpm: float = 3.0
+    tracker_jump_cost: float = 2.5
+    tracker_obs_tau_s: float = 1.0
+    # Harmonic bonus favours half-rate errors (58 BPM for a 117 BPM heart) with real
+    # webcam noise, so it is off by default.
+    harmonic_weight: float = 0.0
+    whitening: float = 0.5
+    whitening_width_hz: float = 0.8
+    # SNR is measured on a noise-flattened spectrum so slow rates (where webcam noise
+    # is strongest) are not favoured over fast ones by the lock gate.
+    snr_whitening: float = 1.0
+    slow_rate_bpm: float = 50.0
+    refine_span_bpm: float = 6.0
+    smoother_process_bpm: float = 1.5
+    smoother_base_noise_bpm: float = 2.0
+
+    # Motion suppression from head movement
+    motion_threshold: float = 0.004
+    motion_full_scale: float = 0.012
+    motion_max_suppression: float = 0.8
+
+    # Status gating (with hysteresis so the reading does not flicker).
+    # A reading is trusted when the SNR is clearly good, or when it is moderate but
+    # several independent skin regions/methods agree on the rate and the tracker has
+    # held the same peak for a few seconds.
+    min_snr_db: float = -1.0
+    good_snr_db: float = 3.0
+    assisted_snr_db: float = -4.5
+    min_agreement: float = 0.25
+    assisted_stable_s: float = 3.0
+    agreement_tolerance_bpm: float = 5.0
+    provisional_min_snr_db: float = -8.0
+    confidence_snr_low_db: float = -5.0
+    snr_tau_s: float = 1.5
+    lock_hysteresis_db: float = 1.5
+    lock_confirm_s: float = 1.0
+    hold_s: float = 4.0
+
+    # Beats and HRV
+    peak_prominence_std: float = 0.25
+    min_ibi_s: float = 0.28
+    max_ibi_s: float = 1.6
+    max_ibi_deviation: float = 0.20
+    min_valid_ibis: int = 8
+    peak_upsample: int = 4
+    beat_template: bool = True
+    beat_min_correlation: float = 0.6
+    hrv_bias_correction: bool = True
+    hrv_timing_noise_factor: float = 0.6
+    hrv_smoothing: int = 5
+    hrv_interval_s: float = 1.0
     hrv_rate_tolerance_bpm: float = 8.0
-    reset_after_loss_s: float = 2.0
+
+    # Respiration
+    respiration_window_s: float = 32.0
+    min_respiration_window_s: float = 16.0
+    respiration_interval_s: float = 1.0
+    respiration_low_hz: float = 0.1
+    respiration_high_hz: float = 0.75
+    respiration_min_quality: float = 0.22
+    respiration_min_snr_db: float = -3.0
 
 
 @dataclass(frozen=True)
@@ -107,6 +172,7 @@ class ServerConfig:
     metrics_hz: float = 15.0
     camera_retry_s: float = 3.0
     telemetry_path: Path | None = DATA_DIR / "telemetry.db"
+    athletics_path: Path | None = DATA_DIR / "athletics.db"
 
 
 @dataclass(frozen=True)
