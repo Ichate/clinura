@@ -117,6 +117,28 @@ export interface Metrics {
   mode: MonitorMode;
   experimental: ExperimentalMetrics | null;
   body: BodyMetrics | null;
+  perfusion?: {
+    image: string | null;
+    ready: boolean;
+    baseline_ready: boolean;
+    perfusion_index?: number;
+    asymmetry_pct?: number;
+    warmer_side?: string | null;
+    redness?: number;
+    flush_delta?: number | null;
+    coverage_pct?: number;
+    history: [number, number | null, number | null][];
+  } | null;
+  thermal?: {
+    enabled: boolean;
+    live: boolean;
+    error: string | null;
+    image?: string;
+    core_c?: number | null;
+    max_c?: number | null;
+    fever?: boolean;
+    breathing?: { bpm: number | null; ready: boolean };
+  } | null;
   lock_state?: "searching" | "locked" | "holding";
   motion_level?: number | null;
   eye: { blink_rate: number | null; blinks: number; openness: number | null };

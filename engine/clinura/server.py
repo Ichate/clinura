@@ -41,10 +41,12 @@ from .exercise import LIBRARY, SKELETON, RepCounter
 from .experimental import ExperimentalObservation, build_tongue_roi
 from .face import FaceTracker
 from .hand import HandTracker
+from .perfusion import PerfusionMapper
 from .pipeline import SignalPipeline
 from .pose import PoseObservation, PoseTracker
 from .recording import SessionRecorder
 from .telemetry import EventDetector, TelemetryStore, build_context
+from .thermal import ThermalMonitor
 from .types import AnalysisResult, FaceObservation
 
 logger = logging.getLogger(__name__)
@@ -164,6 +166,9 @@ class Runtime:
         self._pose: PoseObservation | None = None
         self._counter: RepCounter | None = None
         self._hand_image: np.ndarray | None = None
+        self.thermal = ThermalMonitor(on_event=self._thermal_event)
+        self.perfusion = PerfusionMapper()
+        self.perfusion_enabled = False
 
     @property
     def error(self) -> str | None:
@@ -206,6 +211,7 @@ class Runtime:
         if self._pose_tracker is not None:
             self._pose_tracker.close()
             self._pose_tracker = None
+        self.thermal.stop()
         self._detector.close_all()
         self.telemetry.flush()
         self._started = False
@@ -348,6 +354,18 @@ class Runtime:
 
     def reset(self) -> None:
         self._commands.put(("reset", None))
+
+    def _thermal_event(self, kind: str, title: str, value: float) -> None:
+        try:
+            self.telemetry.add_event(
+                kind,
+                "warning" if kind == "fever" else "info",
+                title,
+                value=value,
+                end_ts=time.time(),
+            )
+        except Exception:
+            logger.exception("Could not log thermal event")
 
     def set_camera(self, index: int) -> None:
         if 0 <= index <= 15:
@@ -493,6 +511,17 @@ class Runtime:
                 self._recorder = None
 
         self._pipeline.analyze(timestamp)
+        if self.perfusion_enabled:
+            try:
+                self.perfusion.update(
+                    frame,
+                    observation.bbox if observation.detected and observation.pose_ok else None,
+                    lambda box, n, obs=observation: _face_grid_mask(obs, box, n),
+                    self._pipeline.latest.bpm or self._pipeline.latest.provisional_bpm,
+                    timestamp,
+                )
+            except Exception:
+                logger.exception("Perfusion map failed")
         experimental = self._process_experimental(frame, timestamp, observation)
         if self._mode == "body" and self._pose_tracker is not None:
             try:
@@ -869,8 +898,16 @@ class Runtime:
                 "y": respiration_y,
             },
             "experimental": self._experimental_payload(snapshot) if engine_ok else None,
+            "thermal": self._thermal_payload(),
+            "perfusion": self.perfusion.payload() if self.perfusion_enabled else None,
             "body": self._body_payload() if engine_ok and snapshot.mode == "body" else None,
         }
+
+    def _thermal_payload(self) -> dict[str, object] | None:
+        if not self.thermal.settings.enabled:
+            return None
+        self.thermal.poll()
+        return self.thermal.payload()
 
     def _body_payload(self) -> dict[str, object]:
         with self._lock:
@@ -932,6 +969,26 @@ class Runtime:
             "window_s": _number(result.window_s, 2),
             "analysis_ms": _number(result.analysis_ms, 2),
         }
+
+
+def _face_grid_mask(
+    observation: FaceObservation, box: tuple[int, int, int, int], n: int
+) -> np.ndarray | None:
+    """Skin mask on an n x n grid over ``box``: face oval minus eyes and mouth."""
+    if observation.face_contour is None or len(observation.face_contour) < 3:
+        return None
+    fw, fh = observation.frame_size
+    x, y, w, h = box
+    pts = observation.face_contour * np.array([fw, fh])
+    grid = np.zeros((n, n), np.uint8)
+    local = ((pts - [x, y]) / [max(w, 1), max(h, 1)] * n).astype(np.int32)
+    cv2.fillPoly(grid, [local], 1)
+    if observation.landmarks is not None:
+        lm = observation.landmarks[:, :2] * np.array([fw, fh])
+        for idx, radius in ((468 if len(lm) > 468 else 159, 0.09), (386, 0.09), (13, 0.10)):
+            cx, cy = (lm[min(idx, len(lm) - 1)] - [x, y]) / [max(w, 1), max(h, 1)] * n
+            cv2.circle(grid, (int(cx), int(cy)), max(1, int(radius * n)), 0, -1)
+    return grid.astype(bool)
 
 
 def _number(value: float | None, digits: int = 2) -> float | None:
@@ -1021,6 +1078,23 @@ def _parse_command(text: str) -> dict[str, object] | None:
     return message if isinstance(message, dict) else None
 
 
+class PerfusionIn(BaseModel):
+    enabled: bool | None = None
+    rebaseline: bool = False
+
+
+class ThermalIn(BaseModel):
+    enabled: bool | None = None
+    camera_index: int | None = Field(default=None, ge=0, le=15)
+    format: str | None = Field(default=None, pattern="^(auto|lepton|tc001|simulated)$")
+    fever_c: float | None = Field(default=None, ge=35.0, le=40.0)
+    canthus_offset_c: float | None = Field(default=None, ge=-2.0, le=2.0)
+
+
+class CalibrateIn(BaseModel):
+    reference_c: float = Field(ge=34.0, le=42.0)
+
+
 class HandoverRequest(BaseModel):
     hours: float = Field(default=6.0, ge=0.05, le=72.0)
     bed: str | None = Field(default=None, max_length=40)
@@ -1084,6 +1158,40 @@ def create_app(
     def camera(index: int) -> dict[str, bool]:
         runtime.set_camera(index)
         return {"ok": True}
+
+    @app.post("/api/perfusion")
+    def perfusion(body: PerfusionIn) -> dict[str, object]:
+        if body.enabled is not None:
+            runtime.perfusion_enabled = body.enabled
+            if body.enabled:
+                runtime.perfusion.reset()
+        if body.rebaseline:
+            runtime.perfusion.rebaseline()
+        return {"enabled": runtime.perfusion_enabled}
+
+    @app.get("/api/thermal")
+    def thermal_status() -> dict[str, object]:
+        if runtime.thermal.settings.enabled:
+            runtime.thermal.poll()
+        payload = runtime.thermal.payload()
+        payload.pop("image", None)
+        return _clean(payload)
+
+    @app.post("/api/thermal")
+    async def thermal_configure(body: ThermalIn) -> dict[str, object]:
+        await anyio.to_thread.run_sync(lambda: runtime.thermal.configure(**body.model_dump()))
+        payload = runtime.thermal.payload()
+        payload.pop("image", None)
+        return _clean(payload)
+
+    @app.post("/api/thermal/calibrate")
+    def thermal_calibrate(body: CalibrateIn) -> dict[str, object]:
+        offset = runtime.thermal.calibrate(body.reference_c)
+        if offset is None:
+            raise HTTPException(
+                status_code=409, detail="No face temperature yet. Face the thermal camera."
+            )
+        return {"ok": True, "calibration_c": offset}
 
     @app.post("/api/reset")
     def reset() -> dict[str, bool]:

@@ -10,6 +10,7 @@ import {
   TrendPanel,
 } from "./components/Analysis";
 import { AthleticsView } from "./components/Athletics";
+import { ThermalView } from "./components/Thermal";
 import { CopilotPanel, EventLogPanel, HandoverPanel, OverviewPanel } from "./components/Care";
 import { Logo } from "./components/Logo";
 import { PulseStrip } from "./components/PulseStrip";
@@ -31,11 +32,12 @@ import { usePoll } from "./lib/usePoll";
 import { currentPeriod, useProfile } from "./lib/useProfile";
 import { useVitalsHistory } from "./lib/useVitalsHistory";
 
-type View = "monitor" | "athletics" | "handover" | "wellness" | "research";
+type View = "monitor" | "athletics" | "thermal" | "handover" | "wellness" | "research";
 
 const VIEWS: { value: View; label: string }[] = [
   { value: "monitor", label: "Monitor" },
   { value: "athletics", label: "Athletics" },
+  { value: "thermal", label: "Thermal" },
   { value: "handover", label: "Handover" },
   { value: "wellness", label: "Wellness" },
   { value: "research", label: "Research" },
@@ -289,6 +291,8 @@ export default function App() {
         {view === "athletics" ? (
           <AthleticsView metrics={metrics} frame={frame} connection={connection} exercise={exercise} />
         ) : null}
+
+        {view === "thermal" ? <ThermalView metrics={metrics} frame={frame} connection={connection} /> : null}
 
         {view === "handover" ? (
           <HandoverView hours={hours} setHours={setHours} bed={profile.bed} patient={profile.patient} update={update} />

@@ -1871,3 +1871,50 @@ td[data-tone="bad"] {
   margin: 6px 0;
   padding-left: 18px;
 }
+
+.thermal-stage {
+  position: relative;
+}
+
+.thermal-inset {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  border-radius: var(--radius-panel);
+  background: rgba(10, 14, 18, 0.78);
+}
+
+.thermal-inset img {
+  width: min(240px, 34vw);
+  aspect-ratio: 1;
+  border-radius: 6px;
+}
+
+.thermal-scale {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #eef2f5;
+}
+
+.thermal-bar {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #000004, #57106e, #bc3754, #f98e09, #fcffa4);
+}
+
+.thermal-raw {
+  width: 100%;
+  max-width: 320px;
+  border-radius: 6px;
+}
+
+.thermal-device {
+  margin-top: 10px;
+}

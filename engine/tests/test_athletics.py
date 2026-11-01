@@ -123,3 +123,47 @@ def test_neck_nod_counts_and_hold_tracks_level() -> None:
         hold.update_head((1.0, 1.0, 1.0), t)
         t += 1 / 30
     assert 1.7 <= hold.summary()["hold_s"] <= 2.1
+
+
+def test_thermal_simulated_face_breathing_and_fever() -> None:
+    import time as _time
+
+    from clinura.thermal import ThermalMonitor, ThermalSettings, analyze_frame
+
+    monitor = ThermalMonitor()
+    monitor.configure(enabled=True, format="simulated")
+    try:
+        deadline = _time.time() + 25
+        while _time.time() < deadline:
+            monitor.poll()
+            _time.sleep(0.05)
+        payload = monitor.payload()
+    finally:
+        monitor.stop()
+    assert payload["face_box"] is not None
+    assert 36.5 <= payload["canthus_c"] <= 37.0
+    assert payload["breathing"]["bpm"] is not None
+    assert abs(payload["breathing"]["bpm"] - 15.0) <= 2.0
+    temps = np.full((120, 160), 24.0, np.float32)
+    temps[40:90, 50:110] = 34.0
+    temps[50, 70] = 38.6
+    reading = analyze_frame(temps, ThermalSettings(), 0.0)
+    assert reading.canthus == (70, 50) and reading.core_c > 38.5
+
+
+def test_perfusion_map_finds_pulsing_region() -> None:
+    from clinura.perfusion import PerfusionMapper
+
+    mapper = PerfusionMapper()
+    rng = np.random.default_rng(0)
+    for k in range(300):
+        t = k / 30
+        frame = np.full((240, 320, 3), 120, np.float32)
+        frame[60:180, 100:220] = (100, 120, 170)
+        pulse = 1 + 0.01 * np.sin(2 * np.pi * 1.2 * t)
+        frame[60:180, 160:220, 1] *= 2 - pulse  # right half of face pulses (green dips)
+        frame += rng.normal(0, 0.6, frame.shape)
+        mapper.update(np.clip(frame, 0, 255).astype(np.uint8), (100, 60, 120, 120), lambda box, n: np.ones((n, n), bool), 72.0, t)
+    payload = mapper.payload()
+    assert payload["ready"] and payload["image"]
+    assert payload["warmer_side"] == "right"
