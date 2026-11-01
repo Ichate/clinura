@@ -68,6 +68,9 @@ function guide(metrics: Metrics | null, connection: ConnectionState, mode: Monit
     if (handExercise) {
       return metrics.body?.hand ? null : { title: "Show your hand", copy: "Hold one hand up to the camera, palm facing it." };
     }
+    if ((metrics.body?.session?.exercise ?? "").startsWith("neck") || metrics.body?.session?.exercise === "chin_tuck_hold") {
+      return metrics.face_detected ? null : { title: "Face the camera", copy: "Sit an arm's length away so your face is visible." };
+    }
     if (metrics.body && !metrics.body.detected) {
       return {
         title: "Step back into view",

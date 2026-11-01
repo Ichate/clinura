@@ -374,6 +374,85 @@ LIBRARY: dict[str, Exercise] = {
             setup="Hold one hand up to the camera, palm facing it, fingers together.",
             cues=("Spread your fingers as wide as you can", "Bring them back together"),
         ),
+        Exercise(
+            "neck_rotation",
+            "Neck rotation (look left and right)",
+            "neck",
+            ("head", "head", "head"),
+            8,
+            40,
+            source="head",
+            seated=True,
+            alternate=True,
+            default_reps=10,
+            default_rest_s=30,
+            min_rep_s=0.6,
+            setup="Sit facing the camera, about an arm's length away. Start looking straight ahead.",
+            cues=("Turn your head slowly to one side", "Back to centre, then the other side"),
+        ),
+        Exercise(
+            "neck_side_tilt",
+            "Neck side tilt (ear to shoulder)",
+            "neck",
+            ("head", "head", "head"),
+            6,
+            25,
+            source="head",
+            seated=True,
+            alternate=True,
+            default_reps=10,
+            default_rest_s=30,
+            min_rep_s=0.6,
+            setup="Sit facing the camera, shoulders relaxed. Start with your head level.",
+            cues=("Tilt your ear toward your shoulder", "Keep your shoulders down"),
+        ),
+        Exercise(
+            "neck_nod",
+            "Neck flexion (chin to chest)",
+            "neck",
+            ("head", "head", "head"),
+            6,
+            22,
+            source="head",
+            seated=True,
+            default_reps=10,
+            default_rest_s=30,
+            min_rep_s=0.6,
+            setup="Sit facing the camera. Start looking straight ahead.",
+            cues=("Lower your chin slowly toward your chest", "Return to looking straight ahead"),
+        ),
+        Exercise(
+            "neck_extension",
+            "Neck extension (look up)",
+            "neck",
+            ("head", "head", "head"),
+            6,
+            20,
+            source="head",
+            seated=True,
+            default_reps=8,
+            default_rest_s=30,
+            min_rep_s=0.6,
+            setup="Sit facing the camera. Start looking straight ahead.",
+            cues=("Look up slowly toward the ceiling", "Stop if you feel dizzy"),
+        ),
+        Exercise(
+            "chin_tuck_hold",
+            "Head-level hold (posture)",
+            "neck",
+            ("head", "head", "head"),
+            0,
+            0,
+            kind="hold",
+            source="head",
+            seated=True,
+            hold_range=(0.0, 6.0),
+            default_reps=1,
+            default_hold_s=30,
+            default_rest_s=30,
+            setup="Sit tall facing the camera, gently tuck your chin.",
+            cues=("Hold your head level and still", "Chin gently tucked"),
+        ),
     )
 }
 
@@ -568,6 +647,64 @@ class RepCounter:
                 if joint_angle(world[j["hip"]], world[j["shoulder"]], world[j["elbow"]]) > 105:
                     issues.append("over_raise")
         return issues
+
+    def update_head(self, pose: tuple[float, float, float] | None, t: float) -> None:
+        """Neck exercises from head yaw/pitch/roll (degrees), relative to the neutral
+        position measured during the first half second."""
+        dt = 0.0 if self._last_t is None else float(np.clip(t - self._last_t, 0.0, 0.5))
+        self._last_t = t
+        if pose is None:
+            self.visible = False
+            self.cues = ["Face the camera so your face is visible"]
+            self._hold_streak_start = None
+            return
+        self.visible = True
+        if not hasattr(self, "_neutral_samples"):
+            self._neutral_samples: list[tuple[float, float, float]] = []
+            self._neutral: np.ndarray | None = None
+        if self._neutral is None:
+            self._neutral_samples.append(pose)
+            self.cues = ["Look straight ahead and hold still"]
+            if len(self._neutral_samples) >= 12:
+                self._neutral = np.median(np.asarray(self._neutral_samples), axis=0)
+            return
+        yaw, pitch, roll = (np.asarray(pose) - self._neutral).tolist()
+        key = self.exercise.key
+        self.cues = []
+        if self.exercise.kind == "hold":
+            drift = float(max(abs(yaw), abs(pitch), abs(roll)))
+            self.angle = drift
+            lo, hi = self.exercise.hold_range or (0.0, 6.0)
+            if lo <= drift <= hi:
+                self.hold_s += dt
+                if self._hold_streak_start is None:
+                    self._hold_streak_start = t
+                self.hold_best_s = max(self.hold_best_s, t - self._hold_streak_start)
+            else:
+                self._hold_streak_start = None
+                self.cues = ["Bring your head back to level"]
+            return
+        if key in ("neck_rotation", "neck_side_tilt"):
+            value = yaw if key == "neck_rotation" else roll
+            readings = {"left": max(0.0, value), "right": max(0.0, -value)}
+        elif key == "neck_nod":
+            readings = {"down": max(0.0, -pitch) if self._pitch_sign < 0 else max(0.0, pitch)}
+        else:
+            readings = {"up": max(0.0, pitch) if self._pitch_sign < 0 else max(0.0, -pitch)}
+        side = max(readings, key=lambda k: readings[k])
+        self.active_side = side
+        self.angle = readings[side]
+        for name, value in readings.items():
+            rep, partial = self._counter(name).update(value, t, [])
+            if partial:
+                self.partials += 1
+                self.cues = ["Go a little further, slowly"]
+            if rep is not None:
+                rep.index = len(self.reps) + 1
+                self.reps.append(rep)
+
+    # MediaPipe face space has y up, so pitch = asin(-R[1,2]) is positive looking down.
+    _pitch_sign = 1
 
     def update_hand(self, world: np.ndarray | None, t: float) -> None:
         self._last_t = t

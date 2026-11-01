@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import math
 
 import cv2
 import mediapipe as mp
@@ -54,7 +55,7 @@ class FaceTracker:
             min_face_presence_confidence=self.config.min_face_presence_confidence,
             min_tracking_confidence=self.config.min_tracking_confidence,
             output_face_blendshapes=True,
-            output_facial_transformation_matrixes=False,
+            output_facial_transformation_matrixes=True,
         )
         return vision.FaceLandmarker.create_from_options(options)
 
@@ -95,6 +96,7 @@ class FaceTracker:
         # suppression and the breathing (head rise/fall) signal.
         head = landmarks[HEAD_POINTS, :2].mean(axis=0)
         observation.head_xy = (float(head[0] * width), float(head[1] * height))
+        observation.head_pose = self._head_pose(result)
         blink_left, blink_right = self._extract_blinks(result)
         observation.blink_left = blink_left
         observation.blink_right = blink_right
@@ -103,6 +105,17 @@ class FaceTracker:
         if observation.bbox is not None:
             self._last_bbox = observation.bbox
         return observation
+
+    def _head_pose(self, result: vision.FaceLandmarkerResult) -> tuple[float, float, float] | None:
+        """(yaw, pitch, roll) in degrees from the face transformation matrix."""
+        matrixes = getattr(result, "facial_transformation_matrixes", None)
+        if not matrixes:
+            return None
+        r = np.asarray(matrixes[0], dtype=np.float64)[:3, :3]
+        yaw = math.degrees(math.atan2(r[0, 2], r[2, 2]))
+        pitch = math.degrees(math.asin(float(np.clip(-r[1, 2], -1.0, 1.0))))
+        roll = math.degrees(math.atan2(r[1, 0], r[1, 1]))
+        return (yaw, pitch, roll)
 
     def _extract_blinks(self, result: vision.FaceLandmarkerResult) -> tuple[float, float]:
         left = 0.0

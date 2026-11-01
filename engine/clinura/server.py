@@ -503,7 +503,11 @@ class Runtime:
             with self._lock:
                 self._pose = pose
                 counter = self._counter
-            if counter is not None and counter.exercise.source == "hand":
+            if counter is not None and counter.exercise.source == "head":
+                counter.update_head(
+                    observation.head_pose if observation.detected else None, timestamp
+                )
+            elif counter is not None and counter.exercise.source == "hand":
                 if self._hand_tracker is None:
                     try:
                         self._hand_tracker = HandTracker(HandConfig())

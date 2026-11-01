@@ -32,6 +32,7 @@ class FaceObservation:
     blink_left: float = 0.0
     blink_right: float = 0.0
     head_xy: tuple[float, float] | None = None
+    head_pose: tuple[float, float, float] | None = None
 
     @property
     def combined_rgb(self) -> tuple[float, float, float] | None:

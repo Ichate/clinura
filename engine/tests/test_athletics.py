@@ -96,3 +96,30 @@ def test_athletics_api_and_pin() -> None:
         )
         assert saved.json()["ok"]
         assert client.get("/api/athletics/sessions").json()[0]["reps_done"] == 16
+
+
+def test_neck_rotation_counts_both_sides_from_neutral() -> None:
+    counter = RepCounter("neck_rotation")
+    t = 0.0
+    sweep = [*np.linspace(0, 45, 20), *np.linspace(45, 0, 20)]
+    angles = [0.0] * 15 + sweep + [-a for a in sweep] + sweep
+    for yaw in angles:
+        counter.update_head((5.0 + float(yaw), 2.0, 1.0), t)  # neutral offset is removed
+        t += 1 / 30
+    assert counter.summary()["reps"] == 3
+
+
+def test_neck_nod_counts_and_hold_tracks_level() -> None:
+    counter = RepCounter("neck_nod")
+    t = 0.0
+    sweep = [*np.linspace(0, 30, 20), *np.linspace(30, 0, 20)]
+    for pitch in [0.0] * 15 + sweep * 2:
+        counter.update_head((0.0, float(pitch), 0.0), t)
+        t += 1 / 30
+    assert counter.summary()["reps"] == 2
+    hold = RepCounter("chin_tuck_hold")
+    t = 0.0
+    for _ in range(15 + 60):
+        hold.update_head((1.0, 1.0, 1.0), t)
+        t += 1 / 30
+    assert 1.7 <= hold.summary()["hold_s"] <= 2.1
