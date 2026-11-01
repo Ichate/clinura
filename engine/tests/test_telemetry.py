@@ -93,7 +93,9 @@ def test_ai_endpoints_use_telemetry_context() -> None:
     runtime.start = lambda: None
     runtime.stop = lambda: None
     stub = StubAssistant()
-    with TestClient(create_app(runtime, ui_dir=None, assistant=stub)) as client:
+    with TestClient(
+        create_app(runtime, ui_dir=None, assistant=stub), base_url="http://127.0.0.1:3000"
+    ) as client:
         response = client.post("/api/handover", json={"hours": 1, "bed": "04"})
         assert response.status_code == 200
         assert response.json()["text"].startswith("## Summary")
@@ -114,7 +116,9 @@ def test_unconfigured_assistant_falls_back_and_reports() -> None:
     runtime.start = lambda: None
     runtime.stop = lambda: None
     assistant = Assistant(AssistantConfig(api_key=None))
-    with TestClient(create_app(runtime, ui_dir=None, assistant=assistant)) as client:
+    with TestClient(
+        create_app(runtime, ui_dir=None, assistant=assistant), base_url="http://127.0.0.1:3000"
+    ) as client:
         handover = client.post("/api/handover", json={"hours": 1})
         assert handover.status_code == 200
         assert handover.json()["generated_by"] == "local template"

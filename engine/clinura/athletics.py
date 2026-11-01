@@ -22,6 +22,7 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 
 from .exercise import LIBRARY
+from .securestore import EncryptedDatabase
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS programs (
@@ -103,14 +104,17 @@ SESSION_FIELDS = (
 
 class AthleticsStore:
     def __init__(self, path: str | Path | None = None) -> None:
-        target = ":memory:" if path is None else str(path)
-        if path is not None:
-            Path(path).parent.mkdir(parents=True, exist_ok=True)
-        self._db = sqlite3.connect(target, check_same_thread=False, isolation_level=None)
+        self._lock = threading.Lock()
+        self._secure: EncryptedDatabase | None = None
+        if path is None:
+            self._db = sqlite3.connect(":memory:", check_same_thread=False, isolation_level=None)
+        else:
+            self._secure = EncryptedDatabase(Path(path), self._lock)
+            self._db = self._secure.conn
         self._db.row_factory = sqlite3.Row
         self._db.execute("PRAGMA foreign_keys=ON")
         self._db.executescript(SCHEMA)
-        self._lock = threading.Lock()
+        self._failed_pins: list[float] = []
 
     # ------------------------------------------------------------- PIN
 
@@ -119,26 +123,62 @@ class AthleticsStore:
             row = self._db.execute("SELECT value FROM settings WHERE key='pin'").fetchone()
         return row is not None
 
+    def pin_locked_for(self) -> float:
+        """Seconds until PIN attempts are allowed again (5 failures -> 60 s lockout)."""
+        now = time.time()
+        self._failed_pins = [t for t in self._failed_pins if now - t < 60.0]
+        if len(self._failed_pins) >= 5:
+            return 60.0 - (now - self._failed_pins[0])
+        return 0.0
+
     def check_pin(self, pin: str | None) -> bool:
         with self._lock:
             row = self._db.execute("SELECT value FROM settings WHERE key='pin'").fetchone()
         if row is None:
             return True
-        salt, digest = str(row["value"]).split(":", 1)
-        candidate = hashlib.sha256((salt + (pin or "")).encode()).hexdigest()
-        return secrets.compare_digest(candidate, digest)
+        if self.pin_locked_for() > 0:
+            return False
+        stored = str(row["value"])
+        if stored.startswith("pbkdf2$"):
+            _, iterations, salt, digest = stored.split("$")
+            candidate = hashlib.pbkdf2_hmac(
+                "sha256", (pin or "").encode(), bytes.fromhex(salt), int(iterations)
+            ).hex()
+        else:  # legacy salted sha256
+            salt, digest = stored.split(":", 1)
+            candidate = hashlib.sha256((salt + (pin or "")).encode()).hexdigest()
+        ok = secrets.compare_digest(candidate, digest)
+        if not ok:
+            self._failed_pins.append(time.time())
+        else:
+            self._failed_pins.clear()
+            if not stored.startswith("pbkdf2$"):
+                self.set_pin(pin)
+        return ok
 
     def set_pin(self, pin: str | None) -> None:
         with self._lock:
             if not pin:
                 self._db.execute("DELETE FROM settings WHERE key='pin'")
                 return
-            salt = secrets.token_hex(8)
-            digest = hashlib.sha256((salt + pin).encode()).hexdigest()
+            salt = secrets.token_bytes(16)
+            iterations = 300_000
+            digest = hashlib.pbkdf2_hmac("sha256", pin.encode(), salt, iterations).hex()
             self._db.execute(
                 "INSERT OR REPLACE INTO settings (key, value) VALUES ('pin', ?)",
-                (f"{salt}:{digest}",),
+                (f"pbkdf2${iterations}${salt.hex()}${digest}",),
             )
+
+    def wipe(self, key: bytes | None = None) -> None:
+        with self._lock:
+            for table in ("sessions", "items", "programs", "settings"):
+                self._db.execute(f"DELETE FROM {table}")  # noqa: S608 - fixed table names  # nosec B608 - column names from fixed whitelist; values are parameters
+            self._db.execute("VACUUM")
+            if self._secure is not None:
+                if key is not None:
+                    self._secure.rekey(key)
+                else:
+                    self._secure.save(force=True)
 
     # -------------------------------------------------------- programs
 
@@ -163,7 +203,7 @@ class AthleticsStore:
         values["start_date"] = values.get("start_date") or date.today().isoformat()
         with self._lock:
             cursor = self._db.execute(
-                f"INSERT INTO programs ({','.join(PROGRAM_FIELDS)}, created_at, updated_at) "
+                f"INSERT INTO programs ({','.join(PROGRAM_FIELDS)}, created_at, updated_at) "  # nosec B608 - column names from fixed whitelist; values are parameters
                 f"VALUES ({','.join('?' for _ in PROGRAM_FIELDS)}, ?, ?)",
                 (*[values[k] for k in PROGRAM_FIELDS], now, now),
             )
@@ -176,7 +216,7 @@ class AthleticsStore:
         values = [int(bool(data[k])) if k == "active" else data[k] for k in fields]
         with self._lock:
             cursor = self._db.execute(
-                f"UPDATE programs SET {','.join(f'{k}=?' for k in fields)}, updated_at=? WHERE id=?",
+                f"UPDATE programs SET {','.join(f'{k}=?' for k in fields)}, updated_at=? WHERE id=?",  # nosec B608 - column names from fixed whitelist; values are parameters
                 (*values, time.time(), program_id),
             )
             return cursor.rowcount > 0
@@ -194,7 +234,7 @@ class AthleticsStore:
             ):
                 raise KeyError("program not found")
             cursor = self._db.execute(
-                f"INSERT INTO items (program_id, {','.join(ITEM_FIELDS)}) "
+                f"INSERT INTO items (program_id, {','.join(ITEM_FIELDS)}) "  # nosec B608 - column names from fixed whitelist; values are parameters
                 f"VALUES (?, {','.join('?' for _ in ITEM_FIELDS)})",
                 (program_id, *[values[k] for k in ITEM_FIELDS]),
             )
@@ -212,7 +252,7 @@ class AthleticsStore:
         values = _item_in(merged)
         with self._lock:
             self._db.execute(
-                f"UPDATE items SET {','.join(f'{k}=?' for k in ITEM_FIELDS)} WHERE id=?",
+                f"UPDATE items SET {','.join(f'{k}=?' for k in ITEM_FIELDS)} WHERE id=?",  # nosec B608 - column names from fixed whitelist; values are parameters
                 (*[values[k] for k in ITEM_FIELDS], item_id),
             )
         return True
@@ -320,7 +360,7 @@ class AthleticsStore:
             values[key] = int(values.get(key) or 0)
         with self._lock:
             cursor = self._db.execute(
-                f"INSERT INTO sessions ({','.join(SESSION_FIELDS)}) "
+                f"INSERT INTO sessions ({','.join(SESSION_FIELDS)}) "  # nosec B608 - column names from fixed whitelist; values are parameters
                 f"VALUES ({','.join('?' for _ in SESSION_FIELDS)})",
                 tuple(values[k] for k in SESSION_FIELDS),
             )
@@ -348,7 +388,10 @@ class AthleticsStore:
 
     def close(self) -> None:
         with self._lock:
-            self._db.close()
+            if self._secure is not None:
+                self._secure.close()
+            else:
+                self._db.close()
 
 
 def _item_in(data: dict[str, object]) -> dict[str, object]:

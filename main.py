@@ -15,7 +15,18 @@ ROOT = Path(__file__).resolve().parent
 ENGINE = ROOT / "engine"
 APP = ROOT / "app"
 DIST = APP / "dist"
-REQUIRED_MODULES = ("mediapipe", "numpy", "scipy", "cv2", "fastapi", "uvicorn", "pydantic", "httpx")
+REQUIRED_MODULES = (
+    "mediapipe",
+    "numpy",
+    "scipy",
+    "cv2",
+    "fastapi",
+    "uvicorn",
+    "pydantic",
+    "httpx",
+    "cryptography",
+    "keyring",
+)
 
 log = logging.getLogger("clinura.main")
 
@@ -136,7 +147,15 @@ def main(argv: list[str] | None = None) -> int:
     import uvicorn
 
     from clinura.config import CaptureConfig, ServerConfig
+    from clinura.security import is_loopback
     from clinura.server import Runtime, create_app
+
+    token = os.environ.get("CLINURA_ACCESS_TOKEN") or None
+    if not is_loopback(args.host) and not token:
+        sys.exit(
+            f"Refusing to listen on {args.host} without CLINURA_ACCESS_TOKEN: health data and the "
+            "live camera would be open to the network. Set a long random token, or use 127.0.0.1."
+        )
 
     runtime = Runtime(
         capture=CaptureConfig(
@@ -146,7 +165,7 @@ def main(argv: list[str] | None = None) -> int:
             fps=args.fps,
             mirror=not args.no_mirror,
         ),
-        server=ServerConfig(host=args.host, port=args.port),
+        server=ServerConfig(host=args.host, port=args.port, access_token=token),
         record_dir=args.record_dir,
     )
     url = f"http://{'127.0.0.1' if args.host in ('0.0.0.0', '::') else args.host}:{args.port}"

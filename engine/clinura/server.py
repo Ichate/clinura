@@ -22,7 +22,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from . import __version__
+from . import __version__, security
 from .assistant import Assistant, AssistantError, local_handover
 from .athletics import AthleticsStore
 from .behavior import EyeActivityTracker, MotionTracker
@@ -354,6 +354,29 @@ class Runtime:
 
     def reset(self) -> None:
         self._commands.put(("reset", None))
+
+    def wipe_all(self) -> None:
+        """Delete all stored readings, events, plans and sessions, rotate the encryption
+        key (old backups/snapshots become unreadable) and reset live state."""
+        from .securestore import rotate_key
+
+        key = None
+        # Only rotate the shared keychain key when this runtime really owns encrypted files;
+        # in-memory stores (tests, demos) must never touch the user's key.
+        secure = getattr(self.telemetry, "_secure", None)
+        if secure is not None and getattr(self.athletics, "_secure", None) is not None:
+            key = rotate_key(secure.path.parent)
+        self._detector.close_all()
+        self.telemetry.wipe(key)
+        self.athletics.wipe(key)
+        self.perfusion.reset()
+        self.reset()
+        if self.record_dir is not None and self.record_dir.exists():
+            import shutil
+
+            for child in self.record_dir.iterdir():
+                if child.is_dir() and child.name.startswith("session-"):
+                    shutil.rmtree(child, ignore_errors=True)
 
     def _thermal_event(self, kind: str, title: str, value: float) -> None:
         try:
@@ -1078,6 +1101,10 @@ def _parse_command(text: str) -> dict[str, object] | None:
     return message if isinstance(message, dict) else None
 
 
+class WipeIn(BaseModel):
+    confirm: str = Field(max_length=10)
+
+
 class PerfusionIn(BaseModel):
     enabled: bool | None = None
     rebaseline: bool = False
@@ -1130,17 +1157,28 @@ def create_app(
         finally:
             await anyio.to_thread.run_sync(runtime.stop)
 
-    app = FastAPI(title="Clinura", version=__version__, lifespan=lifespan)
+    app = FastAPI(
+        title="Clinura",
+        version=__version__,
+        lifespan=lifespan,
+        docs_url=None,
+        redoc_url=None,
+        openapi_url=None,
+    )
+    config = runtime.server_config
+    allowed_origins = security.allowed_origins(config.host, config.port)
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=[
-            f"http://{host}:{port}"
-            for host in ("localhost", "127.0.0.1")
-            for port in (3000, 5173, 4173)
-        ],
+        allow_origins=sorted(allowed_origins),
         allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_methods=["GET", "POST", "PUT", "DELETE"],
+        allow_headers=["Content-Type", "X-Clinician-Pin", "Authorization"],
+    )
+    app.add_middleware(
+        security.SecurityMiddleware,
+        allowed_hosts=security.allowed_hosts(config.host),
+        allowed_origins=allowed_origins,
+        token=config.access_token,
     )
 
     @app.get("/api/health")
@@ -1192,6 +1230,19 @@ def create_app(
                 status_code=409, detail="No face temperature yet. Face the thermal camera."
             )
         return {"ok": True, "calibration_c": offset}
+
+    @app.post("/api/data/wipe")
+    async def wipe(
+        body: WipeIn, x_clinician_pin: str | None = Header(default=None)
+    ) -> dict[str, bool]:
+        if body.confirm != "WIPE":
+            raise HTTPException(status_code=400, detail='Type "WIPE" to confirm.')
+        if runtime.athletics.pin_locked_for() > 0:
+            raise HTTPException(status_code=429, detail="Too many wrong PINs. Wait a minute.")
+        if not runtime.athletics.check_pin(x_clinician_pin):
+            raise HTTPException(status_code=403, detail="Clinician PIN required to wipe data.")
+        await anyio.to_thread.run_sync(runtime.wipe_all)
+        return {"ok": True}
 
     @app.post("/api/reset")
     def reset() -> dict[str, bool]:
@@ -1262,6 +1313,13 @@ def create_app(
 
     @app.websocket("/ws")
     async def websocket_endpoint(websocket: WebSocket) -> None:
+        # Browsers do not apply CORS to WebSockets: without this check any website you
+        # visit could open ws://127.0.0.1:3000/ws and watch the camera and vitals.
+        if not security.websocket_allowed(
+            websocket.headers, websocket.cookies, websocket.query_params, allowed_origins, config
+        ):
+            await websocket.close(code=1008)
+            return
         await websocket.accept()
 
         async def send_metrics() -> None:
@@ -1405,6 +1463,11 @@ def register_athletics_routes(app: FastAPI, runtime: Runtime) -> None:
     store = runtime.athletics
 
     def require_clinician(pin: str | None) -> None:
+        wait = store.pin_locked_for()
+        if wait > 0 and store.pin_set():
+            raise HTTPException(
+                status_code=429, detail=f"Too many wrong PINs. Try again in {int(wait) + 1} s."
+            )
         if not store.check_pin(pin):
             raise HTTPException(
                 status_code=403, detail="Clinician PIN required to change the plan."
@@ -1423,6 +1486,11 @@ def register_athletics_routes(app: FastAPI, runtime: Runtime) -> None:
 
     @app.post("/api/athletics/pin/verify")
     def pin_verify(body: PinIn) -> dict[str, bool]:
+        wait = store.pin_locked_for()
+        if wait > 0:
+            raise HTTPException(
+                status_code=429, detail=f"Too many wrong PINs. Try again in {int(wait) + 1} s."
+            )
         return {"ok": store.check_pin(body.pin)}
 
     @app.post("/api/athletics/pin")

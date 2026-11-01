@@ -77,7 +77,7 @@ def test_athletics_api_and_pin() -> None:
     runtime = Runtime(telemetry=TelemetryStore(None))
     runtime.start = lambda: None  # type: ignore[method-assign]
     runtime.stop = lambda: None  # type: ignore[method-assign]
-    with TestClient(create_app(runtime, ui_dir=None)) as client:
+    with TestClient(create_app(runtime, ui_dir=None), base_url="http://127.0.0.1:3000") as client:
         assert len(client.get("/api/athletics/library").json()) == len(LIBRARY)
         program = client.post("/api/athletics/programs", json={"title": "Plan"}).json()
         r = client.post(

@@ -12,6 +12,8 @@ from pathlib import Path
 
 import numpy as np
 
+from .securestore import EncryptedDatabase
+
 SAMPLE_FIELDS = (
     "ts",
     "bpm",
@@ -126,13 +128,14 @@ class Event:
 
 class TelemetryStore:
     def __init__(self, path: str | Path | None = None, retention_days: float = 7.0) -> None:
-        target = ":memory:" if path is None else str(path)
-        if path is not None:
-            Path(path).parent.mkdir(parents=True, exist_ok=True)
-        self._db = sqlite3.connect(target, check_same_thread=False, isolation_level=None)
-        self._db.execute("PRAGMA journal_mode=WAL")
-        self._db.executescript(SCHEMA)
         self._lock = threading.Lock()
+        self._secure: EncryptedDatabase | None = None
+        if path is None:
+            self._db = sqlite3.connect(":memory:", check_same_thread=False, isolation_level=None)
+        else:
+            self._secure = EncryptedDatabase(Path(path), self._lock)
+            self._db = self._secure.conn
+        self._db.executescript(SCHEMA)
         self._pending: list[tuple[object, ...]] = []
         self._last_flush = time.monotonic()
         cutoff = time.time() - retention_days * 86400.0
@@ -164,6 +167,8 @@ class TelemetryStore:
     def flush(self) -> None:
         with self._lock:
             self._flush_locked()
+            if self._secure is not None:
+                self._secure.save()
 
     def add_event(
         self,
@@ -195,7 +200,7 @@ class TelemetryStore:
         with self._lock:
             self._flush_locked()
             rows = self._db.execute(
-                f"SELECT {','.join(SAMPLE_FIELDS)} FROM samples WHERE ts >= ? AND ts <= ? "
+                f"SELECT {','.join(SAMPLE_FIELDS)} FROM samples WHERE ts >= ? AND ts <= ? "  # nosec B608 - column names from fixed whitelist; values are parameters
                 "ORDER BY ts",
                 (since, until or time.time() + 1.0),
             ).fetchall()
@@ -213,7 +218,22 @@ class TelemetryStore:
     def close(self) -> None:
         with self._lock:
             self._flush_locked()
-            self._db.close()
+            if self._secure is not None:
+                self._secure.close()
+            else:
+                self._db.close()
+
+    def wipe(self, key: bytes | None = None) -> None:
+        with self._lock:
+            self._pending.clear()
+            self._db.execute("DELETE FROM samples")
+            self._db.execute("DELETE FROM events")
+            self._db.execute("VACUUM")
+            if self._secure is not None:
+                if key is not None:
+                    self._secure.rekey(key)
+                else:
+                    self._secure.save(force=True)
 
 
 @dataclass

@@ -2043,3 +2043,17 @@ td[data-tone="bad"] {
   font-size: 13px;
   color: var(--ink-2);
 }
+
+.btn--danger {
+  background: var(--bad);
+  border-color: var(--bad);
+  color: #fff;
+}
+
+.btn--danger:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.wipe-box {
+  margin-top: 10px;
+}

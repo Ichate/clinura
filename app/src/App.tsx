@@ -10,6 +10,7 @@ import {
   TrendPanel,
 } from "./components/Analysis";
 import { AthleticsView } from "./components/Athletics";
+import { PrivacyPanel } from "./components/Privacy";
 import { ThermalView } from "./components/Thermal";
 import { CopilotPanel, EventLogPanel, HandoverPanel, OverviewPanel } from "./components/Care";
 import { Logo } from "./components/Logo";
@@ -311,6 +312,9 @@ export default function App() {
             </div>
             <div className="span-12">
               <ProfilePanel profile={profile} update={update} onReset={reset} />
+            </div>
+            <div className="span-12">
+              <PrivacyPanel onWiped={() => window.location.reload()} />
             </div>
           </div>
         ) : null}

@@ -173,6 +173,8 @@ class ServerConfig:
     camera_retry_s: float = 3.0
     telemetry_path: Path | None = DATA_DIR / "telemetry.db"
     athletics_path: Path | None = DATA_DIR / "athletics.db"
+    # Required when listening on a non-loopback address (see security.py).
+    access_token: str | None = None
 
 
 @dataclass(frozen=True)

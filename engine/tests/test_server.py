@@ -140,11 +140,11 @@ def test_mode_commands_are_applied_on_processing_thread() -> None:
 def test_websocket_protocol_tolerates_bad_messages() -> None:
     runtime = _runtime()
     app = create_app(runtime, ui_dir=None)
-    with TestClient(app) as client:
+    with TestClient(app, base_url="http://127.0.0.1:3000") as client:
         assert _wait_for(lambda: runtime.state == RUNNING)
         health = client.get("/api/health").json()
         assert health["state"] == RUNNING
-        with client.websocket_connect("/ws") as ws:
+        with client.websocket_connect("ws://127.0.0.1:3000/ws") as ws:
             hello = json.loads(ws.receive_text())
             assert hello["type"] == "hello"
             ws.send_text("not json")
