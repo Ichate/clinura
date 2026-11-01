@@ -88,6 +88,10 @@ def _idle_behavior() -> dict[str, object]:
     }
 
 
+class CameraSwitch(Exception):
+    """Raised inside the processing loop to reopen on another camera."""
+
+
 class Runtime:
     def __init__(
         self,
@@ -144,6 +148,7 @@ class Runtime:
         self._fps = 0.0
         self._camera_size = (0, 0)
         self._camera_index = self.capture_config.camera_index
+        self._requested_camera: int | None = None
         self._payload_cache: tuple[float, dict[str, object]] | None = None
         self._payload_lock = threading.Lock()
         self.telemetry = telemetry or TelemetryStore(self.server_config.telemetry_path)
@@ -230,6 +235,18 @@ class Runtime:
             position = 0
             failures: dict[int, str] = {}
             while not self._stop.is_set():
+                requested = self._requested_camera
+                if requested is not None:
+                    self._requested_camera = None
+                    if requested != self._camera_index:
+                        # Try the chosen camera first; if it fails, fall back to the one
+                        # that was working.
+                        previous = self._camera_index
+                        others = [
+                            i for i in self._camera_candidates() if i not in (requested, previous)
+                        ]
+                        candidates = [requested, previous, *others]
+                        position = 0
                 index = candidates[position % len(candidates)]
                 config = replace(self.capture_config, camera_index=index)
                 try:
@@ -259,8 +276,12 @@ class Runtime:
                     self._camera_index = index
                 self._set_error(RUNNING, None)
                 self._open_recorder(camera)
+                switched = False
                 try:
                     self._process(camera)
+                except CameraSwitch as exc:
+                    logger.info("Switching to camera %s", exc.args[0])
+                    switched = True
                 except BlackFrameError as exc:
                     logger.warning("%s Trying the next camera.", exc)
                     failures[index] = str(exc)
@@ -275,7 +296,7 @@ class Runtime:
                 finally:
                     self._close_camera()
                     self._reset_signal_state()
-                if not self._stop.is_set():
+                if not self._stop.is_set() and not switched:
                     self._stop.wait(self.server_config.camera_retry_s)
         finally:
             if self._recorder is not None:
@@ -326,6 +347,10 @@ class Runtime:
 
     def reset(self) -> None:
         self._commands.put(("reset", None))
+
+    def set_camera(self, index: int) -> None:
+        if 0 <= index <= 9:
+            self._requested_camera = index
 
     def exercise_command(
         self, action: str, exercise: str | None = None, side: str = "auto"
@@ -395,6 +420,10 @@ class Runtime:
         dark_limit = self.capture_config.black_frame_timeout_s * 2.5
         while not self._stop.is_set():
             self._apply_commands()
+            requested = self._requested_camera
+            if requested is not None and requested != self._camera_index:
+                raise CameraSwitch(requested)
+            self._requested_camera = None
             try:
                 timestamp, frame = camera.read(timeout=0.5)
             except queue.Empty:
@@ -1039,6 +1068,11 @@ def create_app(
     def health() -> dict[str, object]:
         return runtime.health_payload()
 
+    @app.post("/api/camera/{index}")
+    def camera(index: int) -> dict[str, bool]:
+        runtime.set_camera(index)
+        return {"ok": True}
+
     @app.post("/api/reset")
     def reset() -> dict[str, bool]:
         runtime.reset()
@@ -1137,6 +1171,11 @@ def create_app(
                     runtime.set_mode(str(message.get("mode", "face")))
                 elif kind == "reset":
                     runtime.reset()
+                elif kind == "set_camera":
+                    try:
+                        runtime.set_camera(int(message.get("index", 0)))
+                    except (TypeError, ValueError):
+                        pass
                 elif kind == "exercise":
                     runtime.exercise_command(
                         str(message.get("action", "")),

@@ -109,5 +109,7 @@ export function useClinura() {
     [send],
   );
 
-  return { metrics, hello, frame, connection, mode, setMode, resetSignal, exercise };
+  const setCamera = useCallback((index: number) => send({ type: "set_camera", index }), [send]);
+
+  return { metrics, hello, frame, connection, mode, setMode, resetSignal, exercise, setCamera };
 }

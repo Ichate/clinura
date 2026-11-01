@@ -112,7 +112,7 @@ function HandoverView({
 }
 
 export default function App() {
-  const { metrics, hello, frame, connection, mode, setMode, resetSignal, exercise } = useClinura();
+  const { metrics, hello, frame, connection, mode, setMode, resetSignal, exercise, setCamera } = useClinura();
   const { profile, update, saveBaseline, reset } = useProfile();
   const [view, setView] = useState<View>(initialView);
   const [waveWindow, setWaveWindow] = useState(5);
@@ -172,6 +172,21 @@ export default function App() {
         </nav>
         <div className="topbar-status">
           {profile.bed ? <span className="bed">Bed {profile.bed}</span> : null}
+          <label className="camera-pick">
+            <span>Camera</span>
+            <select
+              value={metrics?.camera.index ?? 0}
+              disabled={connection !== "live"}
+              onChange={(e) => setCamera(Number(e.target.value))}
+              aria-label="Choose camera"
+            >
+              {[0, 1, 2, 3].map((i) => (
+                <option key={i} value={i}>
+                  {i === 0 ? "0 (default)" : i}
+                </option>
+              ))}
+            </select>
+          </label>
           <span className="engine" data-tone={engine.tone} title={metrics?.error ?? undefined}>
             <span className="dot" data-tone={engine.tone} />
             {engine.text}
