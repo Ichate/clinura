@@ -515,7 +515,7 @@ class Runtime:
             try:
                 self.perfusion.update(
                     frame,
-                    observation.bbox if observation.detected and observation.pose_ok else None,
+                    observation.bbox if observation.detected else None,
                     lambda box, n, obs=observation: _face_grid_mask(obs, box, n),
                     self._pipeline.latest.bpm or self._pipeline.latest.provisional_bpm,
                     timestamp,

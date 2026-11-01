@@ -163,7 +163,13 @@ def test_perfusion_map_finds_pulsing_region() -> None:
         pulse = 1 + 0.01 * np.sin(2 * np.pi * 1.2 * t)
         frame[60:180, 160:220, 1] *= 2 - pulse  # right half of face pulses (green dips)
         frame += rng.normal(0, 0.6, frame.shape)
-        mapper.update(np.clip(frame, 0, 255).astype(np.uint8), (100, 60, 120, 120), lambda box, n: np.ones((n, n), bool), 72.0, t)
+        mapper.update(
+            np.clip(frame, 0, 255).astype(np.uint8),
+            (100, 60, 120, 120),
+            lambda box, n: np.ones((n, n), bool),
+            72.0,
+            t,
+        )
     payload = mapper.payload()
     assert payload["ready"] and payload["image"]
     assert payload["warmer_side"] == "right"

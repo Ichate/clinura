@@ -20,8 +20,9 @@ from collections import deque
 import cv2
 import numpy as np
 
-GRID = 24
-WINDOW_S = 8.0
+GRID = 32
+WINDOW_S = 6.0
+OUT = 480
 
 
 class PerfusionMapper:
@@ -37,6 +38,9 @@ class PerfusionMapper:
         self._stats: dict[str, object] = {}
         self._history: deque[tuple[float, float | None, float | None]] = deque(maxlen=600)
         self._last_hist = 0.0
+        self._mode = "none"
+        self._last_redness_img = 0.0
+        self.progress = 0.0
 
     def reset(self) -> None:
         self.__init__()
@@ -78,8 +82,16 @@ class PerfusionMapper:
         self._redness.append((t, redness))
         if self._baseline_redness is None and len(self._redness) >= 60:
             self._baseline_redness = float(np.median([r for _, r in self._redness]))
-        if bpm is not None and t - self._last_map_t >= 0.5 and len(self._frames) >= 90:
+        if len(self._frames) >= 60 and t - self._last_map_t >= 0.25:
             self._compute(bpm, t)
+        elif self._image is None or self._mode == "redness":
+            # Instant view while the pulse window fills: redness (a*) map.
+            if t - self._last_redness_img >= 0.15:
+                self._last_redness_img = t
+                a = lab[:, :, 1] - 128.0
+                lo, hi = np.percentile(a[skin], [5, 98]) if skin.any() else (0.0, 1.0)
+                self._render(np.clip((a - lo) / max(hi - lo, 1e-3), 0, 1), "redness")
+        self.progress = min(1.0, len(self._frames) / 60.0)
 
     def _compute(self, bpm: float, t: float) -> None:
         self._last_map_t = t
@@ -100,7 +112,14 @@ class PerfusionMapper:
         window = np.hanning(len(grid))[:, None]
         spec = np.abs(np.fft.rfft(pulse * window, n=1024, axis=0)) ** 2
         freqs = np.fft.rfftfreq(1024, 1 / fs)
-        f0 = bpm / 60.0
+        band_mask = (freqs >= 0.7) & (freqs <= 3.0)
+        if bpm is None:
+            mean_spec = spec[
+                :, (self._mask.reshape(-1) if self._mask is not None else slice(None))
+            ].mean(axis=1)
+            f0 = float(freqs[band_mask][int(np.argmax(mean_spec[band_mask]))])
+        else:
+            f0 = bpm / 60.0
         sig = (np.abs(freqs - f0) <= 0.12)[:, None]
         band = ((freqs >= 0.65) & (freqs <= 4.0))[:, None]
         snr = (spec * sig).sum(axis=0) / np.maximum(
@@ -133,16 +152,20 @@ class PerfusionMapper:
         if t - self._last_hist >= 1.0:
             self._last_hist = t
             self._history.append((time.time(), self._stats["perfusion_index"], flush))
-        heat = (np.clip(self._map / 1.2, 0, 1) * 255).astype(np.uint8)
-        heat = cv2.resize(heat, (240, 240), interpolation=cv2.INTER_CUBIC)
+        self._render(np.clip(self._map / 1.2, 0, 1), "perfusion")
+
+    def _render(self, values: np.ndarray, mode: str) -> None:
+        self._mode = mode
+        heat = (values * 255).astype(np.uint8)
+        heat = cv2.resize(heat, (OUT, OUT), interpolation=cv2.INTER_CUBIC)
+        heat = cv2.GaussianBlur(heat, (0, 0), OUT / GRID * 0.6)
         color = cv2.applyColorMap(heat, cv2.COLORMAP_INFERNO)
-        mask_big = cv2.resize(
-            (self._mask if self._mask is not None else np.ones((GRID, GRID), bool)).astype(np.uint8)
-            * 255,
-            (240, 240),
-        )
-        color[mask_big < 128] = (20, 14, 10)
-        ok, enc = cv2.imencode(".jpg", color, [cv2.IMWRITE_JPEG_QUALITY, 82])
+        mask = self._mask if self._mask is not None else np.ones((GRID, GRID), bool)
+        soft = cv2.resize(mask.astype(np.float32), (OUT, OUT), interpolation=cv2.INTER_LINEAR)
+        soft = cv2.GaussianBlur(soft, (0, 0), OUT / GRID * 0.8)[:, :, None]
+        background = np.array([28, 18, 12], np.float32)
+        color = (color.astype(np.float32) * soft + background * (1 - soft)).astype(np.uint8)
+        ok, enc = cv2.imencode(".jpg", color, [cv2.IMWRITE_JPEG_QUALITY, 85])
         if ok:
             self._image = "data:image/jpeg;base64," + base64.b64encode(enc.tobytes()).decode()
 
@@ -154,7 +177,9 @@ class PerfusionMapper:
         return {
             "image": self._image,
             "box": self._box,
-            "ready": self._image is not None,
+            "ready": self._mode == "perfusion",
+            "mode": self._mode,
+            "progress": round(self.progress, 2),
             "baseline_ready": self._baseline_redness is not None,
             **self._stats,
             "history": [

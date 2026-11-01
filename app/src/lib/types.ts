@@ -120,6 +120,8 @@ export interface Metrics {
   perfusion?: {
     image: string | null;
     ready: boolean;
+    mode?: "none" | "redness" | "perfusion";
+    progress?: number;
     baseline_ready: boolean;
     perfusion_index?: number;
     asymmetry_pct?: number;
