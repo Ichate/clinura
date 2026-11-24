@@ -47,7 +47,18 @@ def list_cameras(max_index: int = 5, active: int | None = None) -> list[dict[str
         if index == active:
             cameras.append({"index": index, "name": f"Camera {index}"})
             continue
-        cap = cv2.VideoCapture(index)
+        system = platform.system()
+        backend = (
+            cv2.CAP_DSHOW
+            if system == "Windows"
+            else cv2.CAP_V4L2
+            if system == "Linux"
+            else cv2.CAP_ANY
+        )
+        cap = cv2.VideoCapture(index, backend)
+        if not cap.isOpened() and system == "Windows":
+            cap.release()
+            cap = cv2.VideoCapture(index, cv2.CAP_MSMF)
         if cap.isOpened():
             cameras.append({"index": index, "name": f"Camera {index}"})
         cap.release()

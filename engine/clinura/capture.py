@@ -16,6 +16,18 @@ from .config import CaptureConfig
 logger = logging.getLogger(__name__)
 
 
+def _camera_backend() -> int:
+    """Choose the native low-latency capture backend where OpenCV provides one."""
+    system = platform.system()
+    if system == "Darwin":
+        return cv2.CAP_AVFOUNDATION
+    if system == "Windows":
+        return cv2.CAP_DSHOW
+    if system == "Linux":
+        return cv2.CAP_V4L2
+    return cv2.CAP_ANY
+
+
 class CaptureError(RuntimeError):
     pass
 
@@ -45,18 +57,28 @@ class CameraSource:
         self._actual_fps = 0.0
 
     def start(self) -> None:
-        backend = cv2.CAP_AVFOUNDATION if platform.system() == "Darwin" else cv2.CAP_ANY
+        backend = _camera_backend()
         try:
             self._cap = cv2.VideoCapture(self.config.camera_index, backend)
+            # Some Windows camera drivers are exposed only through Media Foundation.
+            # Fall back without changing the macOS AVFoundation route.
+            if (
+                (self._cap is None or not self._cap.isOpened())
+                and platform.system() == "Windows"
+            ):
+                self._release()
+                self._cap = cv2.VideoCapture(self.config.camera_index, cv2.CAP_MSMF)
         except Exception as exc:
             raise CaptureError(f"Unable to open camera {self.config.camera_index}: {exc}") from exc
         if self._cap is None or not self._cap.isOpened():
             self._release()
-            raise CaptureError(
-                f"Unable to open camera {self.config.camera_index}. Check that no other app "
-                "is using it and that your terminal or IDE has camera access (System "
-                "Settings > Privacy & Security > Camera)."
-            )
+            if platform.system() == "Darwin":
+                detail = "Check that no other app is using it and allow camera access in System Settings > Privacy & Security > Camera."
+            elif platform.system() == "Windows":
+                detail = "Check Windows Settings > Privacy & security > Camera, enable camera access for desktop apps, and close apps using the camera."
+            else:
+                detail = "Check camera permissions and close other apps using the camera."
+            raise CaptureError(f"Unable to open camera {self.config.camera_index}. {detail}")
         self._cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.config.width)
         self._cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.config.height)
         self._cap.set(cv2.CAP_PROP_FPS, self.config.fps)

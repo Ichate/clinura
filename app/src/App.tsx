@@ -33,6 +33,9 @@ import { usePoll } from "./lib/usePoll";
 import { currentPeriod, useProfile } from "./lib/useProfile";
 import { useVitalsHistory } from "./lib/useVitalsHistory";
 
+const IS_MAC = /Mac|iPhone|iPad|iPod/.test(navigator.platform);
+const IS_WINDOWS = /Win/.test(navigator.platform);
+
 type View = "monitor" | "athletics" | "thermal" | "handover" | "wellness" | "research";
 
 const VIEWS: { value: View; label: string }[] = [
@@ -106,18 +109,36 @@ function CameraPicker({
         Refresh
       </button>
       <button type="button" className="btn btn--quiet btn--small" onClick={() => setHelp((v) => !v)}>
-        iPhone?
+        {IS_MAC ? "iPhone?" : IS_WINDOWS ? "Phone camera?" : "Camera help"}
       </button>
       {help ? (
         <div className="camera-help" role="note">
-          <strong>Use your iPhone as the camera (Continuity Camera)</strong>
-          <ol>
-            <li>Mac and iPhone signed in to the same Apple ID, Wi-Fi and Bluetooth on.</li>
-            <li>On the iPhone: Settings → General → AirPlay &amp; Continuity → turn on Continuity Camera.</li>
-            <li>Lock the iPhone and mount it still, rear camera facing you, near the Mac.</li>
-            <li>Press Refresh. “iPhone Camera” appears in this list. Pick it.</li>
-          </ol>
-          <p>Not showing? Plug the iPhone in with a cable, unlock once and tap Trust, then lock it and Refresh.</p>
+          {IS_MAC ? (
+            <>
+              <strong>Use your iPhone as the camera (Continuity Camera)</strong>
+              <ol>
+                <li>Sign in to the same Apple ID on both devices and enable Wi-Fi and Bluetooth.</li>
+                <li>On iPhone, enable Settings → General → AirPlay &amp; Continuity → Continuity Camera.</li>
+                <li>Lock and mount iPhone with its rear camera facing you, then press Refresh.</li>
+              </ol>
+              <p>A wired connection can help discovery after trusting the Mac. Select “iPhone Camera” when it appears.</p>
+            </>
+          ) : IS_WINDOWS ? (
+            <>
+              <strong>Use Android as a Windows camera</strong>
+              <ol>
+                <li>For USB: connect a data cable, open the phone's USB notification and choose Webcam, if available.</li>
+                <li>Press Refresh and select the Android/UVC camera.</li>
+                <li>If USB Webcam is unavailable, try Windows 11 Settings → Bluetooth &amp; devices → Mobile devices → Use as connected camera (Phone Link; Android 10+ and current Link to Windows).</li>
+              </ol>
+              <p>Native USB webcam mode depends on your phone maker enabling Android UVC support. Phone Link needs Link to Windows and camera permission. Clinura can use either camera once Windows exposes it.</p>
+            </>
+          ) : (
+            <>
+              <strong>Choose a camera device</strong>
+              <p>Connect a webcam, press Refresh, then select it from the camera list. Clinura keeps camera processing on this computer.</p>
+            </>
+          )}
         </div>
       ) : null}
     </div>

@@ -41,9 +41,40 @@ happened during monitoring.
 
 5. Open **http://127.0.0.1:3000** in your browser.
 
-On a Mac, the first start asks for camera access. If it doesn't, allow it for your terminal in
-**System Settings → Privacy & Security → Camera**. Clinura keeps trying and connects as soon as
-access is given.
+On a Mac, allow camera access for your terminal in **System Settings → Privacy & Security → Camera**.
+On Windows, enable **Settings → Privacy & security → Camera → Let desktop apps access your camera**.
+Clinura uses the native camera capture backend for each platform and keeps trying while access is
+being granted.
+
+### Use an Android phone as a camera on Windows
+
+Clinura reads cameras that Windows exposes as webcam devices. Try these routes in order:
+
+**1. Android's built-in USB webcam mode (no app to install)**
+
+- Use a data-capable USB cable and connect the phone directly to the PC.
+- On the phone, open the USB connection notification and choose **Webcam** or **Use USB for → Webcam**.
+- Keep the phone unlocked while setting up. Tap its webcam notification if you need to preview or switch cameras.
+- In Clinura, press **Refresh** in the camera selector and choose the Android/UVC camera.
+
+Android supports device-as-webcam beginning with Android 14 QPR1, but the phone maker must include and enable the UVC webcam service. Android version alone does not guarantee the option will appear. Google's Pixel instructions show the standard USB steps: [Use your Pixel phone as a webcam](https://support.google.com/pixelcamera/answer/14274129). The Android platform guide explains the USB Video Class path and vendor requirements: [Android device-as-webcam](https://source.android.com/docs/core/camera/webcam).
+
+**2. Windows Phone Link connected camera (wireless)**
+
+On supported Windows 11 systems, link the Android phone in **Settings → Bluetooth & devices → Mobile devices**, enable **Use as connected camera**, and approve camera permission for Link to Windows on the phone. Then start the camera from Windows and press **Refresh** in Clinura. Microsoft lists Windows 11, Android 10+, and Link to Windows 1.24022.0+ as requirements: [Use your mobile device's camera](https://support.microsoft.com/en-us/windows/apps/phonelink/use-your-mobile-device-s-camera). This route requires Microsoft's phone app and a permission prompt, but no separate webcam app.
+
+**If it does not appear:**
+
+- Confirm the phone is connected with a data cable, not a charge-only cable.
+- Look for Webcam in the phone's USB preferences. If the option is missing, the manufacturer may not have enabled native UVC; use Phone Link if available.
+- Close the Windows Camera app, Teams, Zoom and other programs that may be holding the camera, then press **Refresh** again.
+- In Windows, enable **Settings → Privacy & security → Camera → Let desktop apps access your camera**.
+- Open Windows Camera to check whether Windows sees the phone. If Windows Camera cannot see it, Clinura cannot access it either.
+- A USB webcam stream can pause when another phone app takes control of the camera. Long sessions can also warm the phone; use a stable mount and watch device temperature.
+
+Clinura uses Windows DirectShow first and falls back to Media Foundation. It requests 1080p at 30 fps, but the phone and USB camera driver choose the formats they support, so actual resolution and frame rate may be lower. For latency, use the native USB/UVC mode when your phone offers it; Phone Link is a wireless route and network conditions can affect delay.
+
+On Mac, iPhone Continuity Camera remains supported and is discovered through AVFoundation; USB can assist discovery after trusting the Mac. On Windows, a USB-connected iPhone does not present its camera as a generic UVC webcam.
 
 To stop Clinura, press `Ctrl + C` in the terminal.
 
