@@ -1,71 +1,337 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#091313" />
-    <meta name="description" content="Clinura turns an ordinary camera into a private, real-time wellness and movement monitoring workspace." />
-    <title>Clinura — care, in a clearer light</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="styles.css" />
-    <script defer src="script.js"></script>
-  </head>
-  <body>
-    <div class="progress" aria-hidden="true"><i></i></div>
-    <header class="nav shell">
-      <a class="wordmark" href="#home" aria-label="Clinura home"><span class="mark">c<span>+</span></span>clinura</a>
-      <nav aria-label="Main navigation"><a href="#platform">Platform</a><a href="#features">Features</a><a href="#privacy">Privacy</a></nav>
-      <a class="nav-cta" href="../">Explore Clinura <span>↗</span></a>
-    </header>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#050d0c">
+  <meta name="description" content="Clinura brings camera-derived vital estimates, signal quality, movement insights and care context into one private workspace.">
+  <title>Clinura — A clearer view of care</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="script.js"></script>
+</head>
+<body>
+  <div class="scroll-progress"><i></i></div>
 
-    <main>
-      <section class="hero shell" id="home">
-        <div class="hero-copy reveal">
-          <div class="eyebrow"><span class="pulse-dot"></span> A new view of everyday care</div>
-          <h1>Care, in a<br /><em>clearer light.</em></h1>
-          <p>Clinura turns an ordinary camera into a thoughtful health workspace—bringing vital trends, movement insights and meaningful context into one calm, private view.</p>
-          <div class="hero-actions"><a class="button button-bright" href="../">Explore the workspace <span>↗</span></a><a class="text-link" href="#platform">Discover the platform <span>↓</span></a></div>
-          <div class="hero-foot"><span class="mono">01 / A MORE CONNECTED PICTURE</span><span>Designed for clarity, wherever care happens.</span></div>
-        </div>
-        <div class="hero-art" aria-label="Abstract three-dimensional Clinura monitoring display">
-          <div class="orb orb-back"></div><div class="orb orb-main"></div><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
-          <div class="float-card card-heart"><span class="card-label">PULSE · LIVE</span><strong>72<span> bpm</span></strong><div class="sparkline"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
-          <div class="float-card card-signal"><span class="signal-bars"><i></i><i></i><i></i><i></i><i></i></span><div><b>Signal in focus</b><small>Face steady · light balanced</small></div><span class="check">✓</span></div>
-          <div class="float-card card-tag"><span class="tiny-ring">◌</span> A little more context</div>
-          <span class="art-caption mono">REAL-TIME · CAMERA-DERIVED · ON DEVICE</span>
-        </div>
-        <div class="scroll-cue"><span></span> Scroll to explore</div>
-      </section>
+  <header class="site-header wrap">
+    <a class="brand" href="index.html"><span class="brand-icon">c<span>+</span></span>clinura</a>
+    <nav>
+      <a class="active" href="index.html">Overview</a>
+      <a href="monitor.html">Monitor</a>
+      <a href="movement.html">Movement</a>
+      <a href="care.html">Care & trends</a>
+      <a href="privacy.html">Privacy</a>
+    </nav>
+    <a class="header-button" href="../">Open workspace <span>↗</span></a>
+    <button class="menu-toggle" aria-label="Toggle navigation" aria-expanded="false">☰</button>
+  </header>
 
-      <section class="intro section-pad" id="platform">
-        <div class="shell intro-grid">
-          <div class="section-kicker reveal"><span class="mono">THE CLINURA PLATFORM</span><i></i><span>02 — 05</span></div>
-          <div class="intro-copy reveal"><h2>One clear picture.<br /><em>More room to care.</em></h2><p>Health signals rarely tell the whole story alone. Clinura brings camera-derived estimates, movement, trends and notes together—so the details are easier to understand over time.</p><a class="text-link" href="#features">See what comes together <span>↓</span></a></div>
-          <div class="stat-row"><div class="stat reveal"><strong>01</strong><span>Live camera<br />workspace</span></div><div class="stat reveal"><strong>06</strong><span>Ways to explore<br />the platform</span></div><div class="stat reveal"><strong>∞</strong><span>Context that builds<br />over time</span></div><div class="stat-note reveal">A connected view, built around the person—not just the number.</div></div>
+  <main>
+    <!-- HERO -->
+    <section class="hero wrap" id="top">
+      <div class="hero-copy reveal">
+        <div class="eyebrow"><i></i> CAMERA-BASED INSIGHT, MADE CLEAR</div>
+        <h1>See the person.<br><em>Read the signals.</em></h1>
+        <p>Clinura brings camera-derived heart rate, HRV, breathing, movement and session context into one considered workspace.</p>
+        <div class="hero-buttons">
+          <a class="button primary" href="monitor.html">Explore the monitor <span>↗</span></a>
+          <a class="button subtle" href="#platform">Meet Clinura <span>↓</span></a>
         </div>
-      </section>
+        <div class="hero-proof">
+          <span class="proof-icon">⌖</span>
+          <div><b>Local by design</b><small>Camera processing stays on your computer</small></div>
+          <span class="proof-divider"></span>
+          <span class="mono">MAC · WINDOWS</span>
+        </div>
+      </div>
 
-      <section class="feature-section section-pad" id="features">
-        <div class="shell">
-          <div class="feature-heading reveal"><div><span class="mono kicker-light">A WORKSPACE WITH RANGE</span><h2>See the signals.<br /><em>Understand the story.</em></h2></div><p>Move from a live reading to longer-term context without losing sight of what matters.</p></div>
-          <div class="feature-grid">
-            <article class="feature-card feature-large reveal"><div class="feature-visual visual-vitals"><div class="mini-window"><div class="mini-top"><span>CLINURA / MONITOR</span><span class="live"><i></i> LIVE</span></div><div class="mini-body"><div class="face-frame"><div class="face-glow"></div><div class="face-outline"></div><span class="frame-corner c1"></span><span class="frame-corner c2"></span><span class="frame-corner c3"></span><span class="frame-corner c4"></span></div><div class="mini-metrics"><div><small>HEART RATE</small><b>72 <i>bpm</i></b><span class="mini-wave"></span></div><div class="metric-pair"><div><small>HRV</small><b>42 <i>ms</i></b></div><div><small>BREATH</small><b>14 <i>/min</i></b></div></div><div class="quality"><span>Signal quality</span><span>Good</span><i><b></b></i></div></div></div></div></div><div class="feature-copy"><span class="mono">01 / MONITOR</span><h3>A live view<br />that stays human.</h3><p>Track heart rate, HRV and breathing from your camera, with signal quality and gentle guidance in view.</p></div></article>
-            <article class="feature-card reveal"><div class="feature-visual visual-trend"><div class="trend-head"><span>DAILY RHYTHM</span><span>Today <b>⌄</b></span></div><div class="trend-big">72 <small>bpm</small></div><div class="trend-chart"><div class="chart-grid"></div><svg viewBox="0 0 400 130" preserveAspectRatio="none"><defs><linearGradient id="area" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#67e1bb" stop-opacity=".3"/><stop offset="1" stop-color="#67e1bb" stop-opacity="0"/></linearGradient></defs><path class="area" d="M0 91 C28 89 30 70 52 77 S80 102 101 85 S124 51 146 63 S175 93 193 76 S215 46 236 56 S265 90 283 67 S303 55 320 66 S349 94 365 65 S388 52 400 36 V130 H0Z"/><path class="line" d="M0 91 C28 89 30 70 52 77 S80 102 101 85 S124 51 146 63 S175 93 193 76 S215 46 236 56 S265 90 283 67 S303 55 320 66 S349 94 365 65 S388 52 400 36"/></svg><span class="chart-time t1">08:00</span><span class="chart-time t2">12:00</span><span class="chart-time t3">16:00</span></div><div class="trend-legend"><i></i>Heart rate <span>Updated just now</span></div></div><div class="feature-copy"><span class="mono">02 / TRENDS</span><h3>Patterns, made<br />easier to notice.</h3><p>Follow readings, signal quality and daily rhythms as they change across a session.</p></div></article>
-            <article class="feature-card reveal"><div class="feature-visual visual-movement"><div class="pose-grid"></div><div class="pose-person"><i class="joint j-head"></i><i class="joint j-neck"></i><i class="joint j-shoulder"></i><i class="joint j-elbow"></i><i class="joint j-wrist"></i><i class="joint j-hip"></i><i class="joint j-knee"></i><i class="joint j-ankle"></i><i class="bone b1"></i><i class="bone b2"></i><i class="bone b3"></i><i class="bone b4"></i><i class="bone b5"></i><i class="bone b6"></i><i class="bone b7"></i></div><div class="rep-pill"><span>SET 02</span><b>08 <small>/ 12 reps</small></b><i><span></span></i></div><span class="pose-angle">KNEE ANGLE <b>94°</b></span></div><div class="feature-copy"><span class="mono">03 / ATHLETICS</span><h3>Progress with<br />the whole picture.</h3><p>Camera-based pose tracking supports prescribed exercise plans, rep counting and session progress.</p></div></article>
-            <article class="feature-card feature-wide reveal"><div class="feature-visual visual-timeline"><div class="timeline-window"><div class="timeline-header"><span>HANDOVER / LAST 6 HOURS</span><span>● Recording</span></div><div class="timeline-stat"><div><small>SESSION OVERVIEW</small><b>Steady through the morning</b></div><span class="timeline-range">06:00 — 12:00</span></div><div class="timeline-events"><div class="event"><i class="event-dot mint"></i><time>08:14</time><span><b>Signal stabilized</b><small>Reading quality good · Face centered</small></span><em>Good signal</em></div><div class="event"><i class="event-dot amber"></i><time>09:32</time><span><b>Movement detected</b><small>Brief movement · Reading resumed</small></span><em>Movement</em></div><div class="event"><i class="event-dot blue"></i><time>10:05</time><span><b>Note added</b><small>Morning medication administered</small></span><em>Care note</em></div></div></div></div><div class="feature-copy"><span class="mono">04 / HANDOVER</span><h3>Keep the context<br />close at hand.</h3><p>Review notable events, add care notes and create a time-windowed handover from the readings.</p></div></article>
-            <article class="feature-card reveal"><div class="feature-visual visual-wellness"><div class="breath-ring ring-outer"></div><div class="breath-ring ring-mid"></div><div class="breath-ring ring-inner"><span>BREATHE<br /><b>IN</b></span></div><div class="breath-label">04.8 <small>seconds</small></div><div class="breath-caption">A MOMENT TO RESET</div></div><div class="feature-copy"><span class="mono">05 / WELLNESS</span><h3>Small rituals.<br />Useful baselines.</h3><p>Save check-ins, compare recovery with your baseline and follow a paced breathing guide.</p></div></article>
-            <article class="feature-card reveal"><div class="feature-visual visual-lab"><div class="lab-orbit o1"></div><div class="lab-orbit o2"></div><div class="lab-core">C<span>+</span></div><span class="lab-chip chip-one">PALM</span><span class="lab-chip chip-two">TONGUE</span><span class="lab-chip chip-three">EXPERIMENTAL</span><div class="lab-caption">A PLACE TO EXPLORE SIGNALS</div></div><div class="feature-copy"><span class="mono">06 / RESEARCH</span><h3>Curiosity, with<br />clear boundaries.</h3><p>Explore experimental palm and tongue measurements with transparent signal feedback.</p></div></article>
+      <div class="monitor-showcase reveal" aria-label="Clinura face scanning and live vital estimates">
+        <div class="ambient ambient-a"></div>
+        <div class="ambient ambient-b"></div>
+        <div class="dashboard">
+          <div class="dash-top">
+            <div class="dash-brand"><span>c+</span> CLINURA <i>/ MONITOR</i></div>
+            <div class="live-status"><i></i> LIVE SESSION</div>
+            <button aria-label="More options">•••</button>
+          </div>
+          <div class="dash-grid">
+            <div class="scan-panel">
+              <div class="scan-label"><span>FACE SIGNAL</span><span class="scan-state"><i></i> TRACKING</span></div>
+              <div class="camera-view">
+                <div class="camera-noise"></div>
+                <div class="scan-face">
+                  <div class="face-hair"></div>
+                  <div class="face-neck"></div>
+                  <div class="face-shoulders"></div>
+                  <div class="face-shape">
+                    <div class="face-ear ear-l"></div>
+                    <div class="face-ear ear-r"></div>
+                    <div class="face-brow brow-l"></div>
+                    <div class="face-brow brow-r"></div>
+                    <div class="face-eye eye-l"><i></i></div>
+                    <div class="face-eye eye-r"><i></i></div>
+                    <div class="face-nose"></div>
+                    <div class="face-cheek cheek-l"></div>
+                    <div class="face-cheek cheek-r"></div>
+                    <div class="face-mouth"></div>
+                    <div class="face-highlight"></div>
+                  </div>
+                  <svg class="mesh" viewBox="0 0 300 370" aria-hidden="true">
+                    <path d="M54 118Q150 38 247 118M58 143Q150 82 242 143M57 167Q150 110 243 167M60 192Q150 146 240 192M64 218Q150 180 236 218M71 245Q150 216 229 245M82 273Q150 250 218 273M94 297Q150 285 206 297M70 115L83 250 118 315M230 115L217 250 182 315M150 79V327M68 165H232M63 218H237"/>
+                    <ellipse cx="150" cy="195" rx="88" ry="132"/>
+                    <ellipse cx="112" cy="168" rx="25" ry="11"/>
+                    <ellipse cx="188" cy="168" rx="25" ry="11"/>
+                    <path d="M150 164L139 215 150 223 161 215M119 250Q150 265 181 250"/>
+                  </svg>
+                  <div class="face-box"></div>
+                  <div class="scan-line"></div>
+                  <span class="scan-corner sc-tl"></span>
+                  <span class="scan-corner sc-tr"></span>
+                  <span class="scan-corner sc-bl"></span>
+                  <span class="scan-corner sc-br"></span>
+                  <span class="roi-tag roi-forehead">FOREHEAD <i></i></span>
+                  <span class="roi-tag roi-cheek">CHEEK ROI <i></i></span>
+                  <span class="tracking-point tp1"></span>
+                  <span class="tracking-point tp2"></span>
+                  <span class="tracking-point tp3"></span>
+                </div>
+                <div class="camera-caption"><span>CAMERA 0 · 1920 × 1080</span><span>FACE CENTERED <i>✓</i></span></div>
+              </div>
+            </div>
+            <div class="readings-panel">
+              <div class="readings-heading"><span>LIVE ESTIMATES</span><span class="readings-time">NOW</span></div>
+              <div class="reading hr-reading">
+                <span class="reading-title"><i class="reading-dot red"></i> HEART RATE <small>●</small></span>
+                <strong>72 <small>bpm</small></strong>
+                <div class="wave wave-red">
+                  <svg viewBox="0 0 250 38" preserveAspectRatio="none"><path d="M0 21H30L38 20 43 8 49 32 56 18H82L90 20 95 12 101 27 107 19H134L142 20 148 7 154 31 161 19H186L194 20 200 11 207 29 213 19H250"/></svg>
+                </div>
+                <span class="reading-foot">Signal locked <i>GOOD</i></span>
+              </div>
+              <div class="reading-pair">
+                <div class="reading">
+                  <span class="reading-title"><i class="reading-dot blue"></i> HRV</span>
+                  <strong>42 <small>ms</small></strong>
+                  <span class="reading-foot">RMSSD</span>
+                </div>
+                <div class="reading">
+                  <span class="reading-title"><i class="reading-dot teal"></i> BREATH</span>
+                  <strong>14 <small>/min</small></strong>
+                  <span class="reading-foot">Estimating</span>
+                </div>
+              </div>
+              <div class="signal-card">
+                <div class="signal-head"><span>SIGNAL QUALITY</span><b>GOOD</b></div>
+                <div class="signal-meter"><i></i></div>
+                <div class="signal-desc"><span>Face steady</span><span>Light balanced</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="dash-bottom">
+            <span><i class="pulse-dot"></i> Processing locally</span>
+            <span>Frames stay on this computer</span>
+            <span class="mono">00:02:18</span>
           </div>
         </div>
-      </section>
+        <div class="float-note note-one">
+          <span class="note-icon">⌁</span>
+          <div><b>Face tracked</b><small>3 skin regions active</small></div>
+          <span class="note-check">✓</span>
+        </div>
+        <div class="float-note note-two">
+          <span class="note-bars"><i></i><i></i><i></i><i></i><i></i></span>
+          <div><b>Signal is clear</b><small>Pulse lock confirmed</small></div>
+        </div>
+        <div class="hero-caption mono">A LIVE VIEW, WITH SIGNAL QUALITY IN CONTEXT</div>
+      </div>
+      <a class="scroll-nudge" href="#platform"><span></span> SCROLL TO EXPLORE</a>
+    </section>
 
-      <section class="privacy-section section-pad" id="privacy"><div class="shell privacy-grid"><div class="privacy-art reveal"><div class="privacy-orb"></div><div class="privacy-ring pr1"></div><div class="privacy-ring pr2"></div><div class="privacy-lock">⌑</div><span class="privacy-label mono">YOUR CAMERA · YOUR COMPUTER</span></div><div class="privacy-copy reveal"><span class="mono">BUILT FOR A PRIVATE VIEW</span><h2>Your video<br /><em>stays yours.</em></h2><p>Clinura processes camera frames on your computer. Video is not sent to the cloud; optional AI features use a summary of readings for handover and questions.</p><div class="privacy-points"><div><span>01</span><b>Local camera processing</b><i>Frames stay on device</i></div><div><span>02</span><b>Clear signal quality</b><i>See when readings need context</i></div><div><span>03</span><b>Your data, in your workspace</b><i>Local history and notes</i></div></div></div></div></section>
+    <!-- TICKER -->
+    <section class="ticker" aria-label="Clinura features">
+      <div class="ticker-track">
+        <span>CAMERA-DERIVED ESTIMATES</span><i>✳</i>
+        <span>LIVE SIGNAL QUALITY</span><i>✳</i>
+        <span>CAMERA-BASED MOVEMENT</span><i>✳</i>
+        <span>LOCAL VIDEO PROCESSING</span><i>✳</i>
+        <span>CARE CONTEXT & TRENDS</span><i>✳</i>
+        <span>CAMERA-DERIVED ESTIMATES</span><i>✳</i>
+        <span>LIVE SIGNAL QUALITY</span><i>✳</i>
+      </div>
+    </section>
 
-      <section class="closing section-pad"><div class="shell closing-inner reveal"><span class="mono">A CLEARER WAY TO SEE THE MOMENT</span><h2>Make space for<br /><em>the bigger picture.</em></h2><p>Explore Clinura’s live workspace and see how camera-derived signals fit into a more complete view.</p><a class="button button-dark" href="../">Explore Clinura <span>↗</span></a><div class="closing-orb"></div></div></section>
-    </main>
+    <!-- INTRO -->
+    <section class="intro section-light" id="platform">
+      <div class="wrap intro-layout">
+        <div class="section-index reveal"><span class="mono">A MORE CONNECTED PICTURE</span><i></i><span>01 — 04</span></div>
+        <div class="intro-main reveal">
+          <p class="eyebrow dark-eyebrow">MEET THE CLINURA WORKSPACE</p>
+          <h2>Not another number.<br><em>A view with context.</em></h2>
+          <p>Clinura is a camera-based monitoring and movement workspace. It pairs estimated vital signs with signal quality, visible trends, exercise sessions and care notes—so each reading has useful context beside it.</p>
+          <a class="inline-link" href="monitor.html">How monitoring works <span>↗</span></a>
+        </div>
+        <div class="intro-stats">
+          <div class="intro-stat reveal"><strong>01</strong><span>live camera<br>workspace</span></div>
+          <div class="intro-stat reveal" data-delay="1"><strong>03</strong><span>estimated vital<br>signals</span></div>
+          <div class="intro-stat reveal" data-delay="2"><strong>06</strong><span>areas to explore<br>in the app</span></div>
+          <div class="intro-note reveal" data-delay="3">Built to make the next useful detail easier to see.</div>
+        </div>
+      </div>
+    </section>
 
-    <footer class="footer shell"><a class="wordmark" href="#home"><span class="mark">c<span>+</span></span>clinura</a><span>Camera-derived estimates for informational use.</span><span class="mono">© CLINURA 2026</span></footer>
-  </body>
+    <!-- FEATURES -->
+    <section class="platform section-dark" id="features">
+      <div class="wrap">
+        <div class="section-heading reveal">
+          <div>
+            <p class="eyebrow"><i></i> ONE WORKSPACE, MANY LENSES</p>
+            <h2>Follow the signal.<br><em>Find the context.</em></h2>
+          </div>
+          <p>Explore a single live session, a longer trend, or the movement and notes around it.</p>
+        </div>
+        <div class="feature-grid">
+          <a class="feature-tile tile-monitor reveal" href="monitor.html">
+            <div class="tile-visual tile-monitor-visual">
+              <div class="tile-scan-face"><i></i><b></b><span></span></div>
+              <div class="tile-readout">
+                <small>HEART RATE</small>
+                <strong>72 <i>bpm</i></strong>
+                <div class="tile-wave"></div>
+                <small>HRV 42 ms&nbsp;&nbsp; · &nbsp;&nbsp; BREATH 14 /MIN</small>
+              </div>
+              <span class="tile-badge"><i></i> LIVE SIGNAL</span>
+            </div>
+            <div class="tile-copy">
+              <span class="mono">01 / MONITOR</span>
+              <h3>See a signal<br>take shape.</h3>
+              <p>Heart rate, HRV and breathing estimates with quality, fit and live camera feedback.</p>
+              <span class="tile-link">Explore monitoring <b>↗</b></span>
+            </div>
+          </a>
+
+          <a class="feature-tile tile-trends reveal" data-delay="1" href="care.html">
+            <div class="tile-visual tile-trend-visual">
+              <div class="trend-ui">
+                <div class="trend-label"><span>SESSION RHYTHM</span><b>TODAY ⌄</b></div>
+                <strong>72 <small>bpm</small></strong>
+                <div class="trend-svg">
+                  <div></div>
+                  <svg viewBox="0 0 500 130" preserveAspectRatio="none">
+                    <path class="trend-fill" d="M0 83C25 83 30 65 54 70S81 102 108 82 133 43 157 54 184 89 212 71 238 45 263 52 290 90 317 68 344 49 371 64 398 95 424 61 465 52 500 30V130H0Z"/>
+                    <path class="trend-line" d="M0 83C25 83 30 65 54 70S81 102 108 82 133 43 157 54 184 89 212 71 238 45 263 52 290 90 317 68 344 49 371 64 398 95 424 61 465 52 500 30"/>
+                  </svg>
+                </div>
+                <div class="trend-axis"><span>08:00</span><span>12:00</span><span>16:00</span><span>20:00</span></div>
+              </div>
+              <div class="trend-float">↗ <b>Compare</b><small>Readings over time</small></div>
+            </div>
+            <div class="tile-copy">
+              <span class="mono">02 / TRENDS</span>
+              <h3>See beyond<br>the moment.</h3>
+              <p>Review readings, signal quality and logged events across a chosen time window.</p>
+              <span class="tile-link">Explore trends <b>↗</b></span>
+            </div>
+          </a>
+
+          <a class="feature-tile tile-movement reveal" href="movement.html">
+            <div class="tile-visual tile-move-visual">
+              <div class="move-grid"></div>
+              <div class="skeleton">
+                <i class="sk-head"></i><i class="sk-neck"></i><i class="sk-shoulder"></i><i class="sk-elbow"></i><i class="sk-wrist"></i><i class="sk-hip"></i><i class="sk-knee"></i><i class="sk-ankle"></i>
+                <b class="sb1"></b><b class="sb2"></b><b class="sb3"></b><b class="sb4"></b><b class="sb5"></b><b class="sb6"></b><b class="sb7"></b>
+              </div>
+              <div class="rep-float"><small>SET 02 · SQUAT</small><b>08 <i>/ 12 reps</i></b><span><i></i></span></div>
+              <div class="move-angle">RANGE OF MOTION <b>94°</b></div>
+            </div>
+            <div class="tile-copy">
+              <span class="mono">03 / MOVEMENT</span>
+              <h3>Make progress<br>visible.</h3>
+              <p>Camera-based pose tracking for prescribed routines, rep counting, form and session review.</p>
+              <span class="tile-link">Explore movement <b>↗</b></span>
+            </div>
+          </a>
+
+          <a class="feature-tile tile-care reveal" data-delay="1" href="care.html">
+            <div class="tile-visual tile-care-visual">
+              <div class="care-window">
+                <div class="care-top"><span>HANDOVER / LAST 6 HOURS</span><b>● RECORDING</b></div>
+                <div class="care-summary"><small>SESSION OVERVIEW</small><strong>Steady through the morning</strong><span>06:00 — 12:00</span></div>
+                <div class="care-event"><i class="mint-dot"></i><time>08:14</time><div><b>Signal stabilized</b><small>Reading quality good · Face centered</small></div><em>Good signal</em></div>
+                <div class="care-event"><i class="amber-dot"></i><time>09:32</time><div><b>Movement detected</b><small>Brief movement · Reading resumed</small></div><em>Movement</em></div>
+                <div class="care-event"><i class="blue-dot"></i><time>10:05</time><div><b>Note added</b><small>Morning medication administered</small></div><em>Care note</em></div>
+              </div>
+            </div>
+            <div class="tile-copy">
+              <span class="mono">04 / CARE CONTEXT</span>
+              <h3>Keep the details<br>together.</h3>
+              <p>Capture events and notes, build a handover and ask questions about the selected window.</p>
+              <span class="tile-link">Explore care context <b>↗</b></span>
+            </div>
+          </a>
+        </div>
+
+        <div class="more-tools reveal">
+          <div><span class="more-icon">◌</span><span><b>Wellness check-ins</b><small>Save personal baselines, review recovery and follow paced breathing.</small></span><a href="care.html#wellness">Explore wellness <i>↗</i></a></div>
+          <div><span class="more-icon">⌕</span><span><b>Research modes</b><small>Try experimental palm or tongue measurements with clear caveats.</small></span><a href="monitor.html#research">Explore research <i>↗</i></a></div>
+          <div><span class="more-icon">◈</span><span><b>Thermal camera support</b><small>Optional radiometric USB thermal camera workflows.</small></span><a href="monitor.html#thermal">Explore thermal <i>↗</i></a></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- HOW -->
+    <section class="how section-light">
+      <div class="wrap how-layout">
+        <div class="how-copy reveal">
+          <p class="eyebrow dark-eyebrow">A SIMPLE START</p>
+          <h2>Get a clearer<br><em>camera view.</em></h2>
+          <p>Clinura works with a webcam or a compatible phone camera exposed to your computer. Place the camera at eye level, use steady front lighting and sit still while the signal settles.</p>
+          <a class="inline-link" href="monitor.html#setup">See camera setup tips <span>↗</span></a>
+        </div>
+        <div class="steps">
+          <div class="step reveal"><span>01</span><div><b>Connect a camera</b><p>Use the built-in camera, a USB webcam, Mac Continuity Camera, or a supported Android webcam mode.</p></div><i>⌖</i></div>
+          <div class="step reveal" data-delay="1"><span>02</span><div><b>Find a steady position</b><p>Keep your face centered, well lit and comfortably still while the signal is acquired.</p></div><i>◎</i></div>
+          <div class="step reveal" data-delay="2"><span>03</span><div><b>Read with context</b><p>Use quality cues and trends alongside the estimates. Numbers need good signal and stillness.</p></div><i>⌁</i></div>
+          <div class="step reveal" data-delay="3"><span>04</span><div><b>Explore the rest</b><p>Review events, wellness check-ins, prescribed movement sessions and research modes.</p></div><i>↗</i></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PRIVACY BAND -->
+    <section class="privacy-band">
+      <div class="wrap privacy-band-inner reveal">
+        <div class="privacy-symbol"><span>⌑</span><i></i><b></b></div>
+        <div>
+          <p class="eyebrow">PRIVATE BY DEFAULT</p>
+          <h2>Your video stays<br><em>on your computer.</em></h2>
+          <p>Clinura processes camera frames locally. Video is not sent to the cloud. Optional AI assistance uses a summary of readings and events, not the camera feed.</p>
+          <a class="button outline" href="privacy.html">How privacy works <span>↗</span></a>
+        </div>
+        <div class="privacy-points">
+          <span><i>✓</i> Local camera processing</span>
+          <span><i>✓</i> Clear signal quality cues</span>
+          <span><i>✓</i> Local history and notes</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- CLOSING -->
+    <section class="closing">
+      <div class="wrap closing-inner reveal">
+        <span class="mono">THE CLINURA WORKSPACE</span>
+        <h2>Make room for<br><em>the whole picture.</em></h2>
+        <p>Explore a monitoring workspace built to bring the signal and its context closer together.</p>
+        <a class="button dark-button" href="../">Open Clinura <span>↗</span></a>
+        <div class="closing-grid"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer wrap">
+    <a class="brand" href="index.html"><span class="brand-icon">c<span>+</span></span>clinura</a>
+    <span>Camera-derived estimates for informational use.</span>
+    <div><a href="privacy.html">Privacy</a><a href="../">Open workspace</a><span>© CLINURA 2026</span></div>
+  </footer>
+</body>
 </html>

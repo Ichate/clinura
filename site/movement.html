@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#050d0c">
+  <meta name="description" content="Clinura Athletics supports prescribed exercise plans with camera-based pose tracking, rep counts and session progress.">
+  <title>Movement — Clinura</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="script.js"></script>
+</head>
+<body>
+  <div class="scroll-progress"><i></i></div>
+
+  <header class="site-header wrap">
+    <a class="brand" href="index.html"><span class="brand-icon">c<span>+</span></span>clinura</a>
+    <nav>
+      <a href="index.html">Overview</a>
+      <a href="monitor.html">Monitor</a>
+      <a class="active" href="movement.html">Movement</a>
+      <a href="care.html">Care & trends</a>
+      <a href="privacy.html">Privacy</a>
+    </nav>
+    <a class="header-button" href="../">Open workspace <span>↗</span></a>
+    <button class="menu-toggle" aria-label="Toggle navigation" aria-expanded="false">☰</button>
+  </header>
+
+  <main>
+    <!-- SUBHERO -->
+    <section class="subhero movement-hero wrap">
+      <div class="subhero-copy reveal">
+        <p class="eyebrow"><i></i> 02 / CAMERA-BASED MOVEMENT</p>
+        <h1>Make every<br><em>rep count.</em></h1>
+        <p>Clinura Athletics brings prescribed exercise plans and camera-based movement tracking into a guided session—with rep counts, range of motion and progress in view.</p>
+        <div class="hero-buttons">
+          <a class="button primary" href="../">Explore Athletics <span>↗</span></a>
+          <a class="button subtle" href="#how-it-works">How it works <span>↓</span></a>
+        </div>
+      </div>
+      <div class="movement-hero-art reveal">
+        <div class="move-grid"></div>
+        <div class="big-skeleton">
+          <i class="sk-head"></i><i class="sk-neck"></i><i class="sk-shoulder"></i><i class="sk-elbow"></i><i class="sk-wrist"></i><i class="sk-hip"></i><i class="sk-knee"></i><i class="sk-ankle"></i>
+          <b class="sb1"></b><b class="sb2"></b><b class="sb3"></b><b class="sb4"></b><b class="sb5"></b><b class="sb6"></b><b class="sb7"></b>
+        </div>
+        <div class="pose-panel">
+          <span>POSE TRACKING <i>● ACTIVE</i></span>
+          <b>08 <small>/ 12 reps</small></b>
+          <div class="pose-progress"><i></i></div>
+          <small>SET 02 · SQUAT</small>
+        </div>
+        <div class="angle-label">KNEE RANGE <b>94°</b></div>
+        <span class="hero-art-label mono">BODY LANDMARKS · RANGE OF MOTION · FORM</span>
+      </div>
+    </section>
+
+    <!-- FLOW -->
+    <section class="section-light movement-intro" id="how-it-works">
+      <div class="wrap">
+        <div class="section-heading light-heading reveal">
+          <div>
+            <p class="eyebrow dark-eyebrow">FROM PLAN TO PROGRESS</p>
+            <h2>Guidance that follows<br><em>the whole session.</em></h2>
+          </div>
+          <p>Designed for routines prescribed by a physician, physiotherapist or trainer. The camera supports movement tracking; the care plan still comes from your professional.</p>
+        </div>
+        <div class="movement-flow">
+          <article class="flow-card reveal">
+            <span>01 / PLAN</span>
+            <div class="flow-icon plan-icon">☷</div>
+            <h3>Set the routine</h3>
+            <p>A clinician or trainer creates a program, selects exercises and sets reps, rest, schedule and instructions.</p>
+            <div class="plan-mini">
+              <b>Today's plan</b>
+              <span>Chair squat <i>3 × 10</i></span>
+              <span>Wall push-up <i>3 × 8</i></span>
+              <span>Shoulder flexion <i>2 × 12</i></span>
+            </div>
+          </article>
+          <article class="flow-card reveal" data-delay="1">
+            <span>02 / MOVE</span>
+            <div class="flow-icon move-icon">⌖</div>
+            <h3>Follow the cues</h3>
+            <p>Pose landmarks track visible joints. Live cues help with setup, exercise position and rep completion.</p>
+            <div class="cue-mini">
+              <i>●</i> Whole body in frame<br>
+              <i>●</i> Move through full range<br>
+              <i>●</i> Rest between sets
+            </div>
+          </article>
+          <article class="flow-card reveal" data-delay="2">
+            <span>03 / REVIEW</span>
+            <div class="flow-icon review-icon">↗</div>
+            <h3>Review progress</h3>
+            <p>Sessions record reps, form, range of motion, rest, heart-rate context, effort and pain reports.</p>
+            <div class="review-mini">
+              <span>14 DAY ADHERENCE</span>
+              <b>10 <small>/ 14 days</small></b>
+              <i><em></em></i>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- LIBRARY -->
+    <section class="exercise-section section-dark">
+      <div class="wrap exercise-layout">
+        <div class="exercise-copy reveal">
+          <p class="eyebrow"><i></i> EXERCISE LIBRARY</p>
+          <h2>Built around<br><em>real movement.</em></h2>
+          <p>The exercise library covers common strength, mobility and functional movements. A clinician or trainer chooses which movements belong in a particular plan.</p>
+        </div>
+        <div class="exercise-list reveal">
+          <div><span>LOWER BODY</span><p>Squat · Sit-to-stand · Lunge · Knee extension · Glute bridge · Wall sit</p></div>
+          <div><span>UPPER BODY</span><p>Push-up · Biceps curl · Shoulder press · Lateral raise · Shoulder flexion</p></div>
+          <div><span>WHOLE BODY</span><p>High-knee march · Jumping jacks · Plank</p></div>
+          <div><span>HAND & FACE MODES</span><p>Experimental palm and tongue signal activities are separate research modes.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SESSION -->
+    <section class="session-section section-light">
+      <div class="wrap session-layout">
+        <div class="session-copy reveal">
+          <p class="eyebrow dark-eyebrow">A SESSION, STEP BY STEP</p>
+          <h2>Measure. Move.<br><em>Recover. Reflect.</em></h2>
+          <p>Each program can combine a short resting measurement, movement sets, rest periods and a recovery check before the session is saved.</p>
+        </div>
+        <div class="session-timeline">
+          <div class="session-row reveal"><span>01</span><i class="session-line"></i><div><b>Resting check</b><p>Capture a resting heart-rate estimate before exercise.</p></div><small>15 SEC</small></div>
+          <div class="session-row reveal" data-delay="1"><span>02</span><i class="session-line"></i><div><b>Guided set</b><p>Follow the movement cue while Clinura counts visible repetitions.</p></div><small>LIVE</small></div>
+          <div class="session-row reveal" data-delay="2"><span>03</span><i class="session-line"></i><div><b>Rest and recover</b><p>Pause between sets and measure heart-rate recovery after activity.</p></div><small>60 SEC</small></div>
+          <div class="session-row reveal" data-delay="3"><span>04</span><i class="session-line"></i><div><b>Record how it felt</b><p>Add effort and pain scores, then review the session details.</p></div><small>REFLECT</small></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- NOTE -->
+    <section class="movement-note">
+      <div class="wrap notice-inner">
+        <span class="notice-icon">i</span>
+        <div>
+          <b>Movement tracking has practical limits</b>
+          <p>Use enough space and lighting to keep the required body landmarks visible. Camera angle, clothing, occlusion and movement speed can affect pose tracking. Clinura supports a prescribed plan; it does not replace professional assessment or supervision.</p>
+        </div>
+        <a class="button outline" href="privacy.html">Read limitations <span>↗</span></a>
+      </div>
+    </section>
+
+    <section class="page-next">
+      <div class="wrap page-next-inner">
+        <span class="mono">NEXT / CARE & TRENDS</span>
+        <a href="care.html">Bring readings and events into context <b>↗</b></a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer wrap">
+    <a class="brand" href="index.html"><span class="brand-icon">c<span>+</span></span>clinura</a>
+    <span>Camera-derived estimates for informational use.</span>
+    <div><a href="privacy.html">Privacy</a><a href="../">Open workspace</a><span>© CLINURA 2026</span></div>
+  </footer>
+</body>
+</html>

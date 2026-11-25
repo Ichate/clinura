@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#050d0c">
+  <meta name="description" content="Learn how Clinura processes camera video locally, stores history and handles optional AI summaries.">
+  <title>Privacy & limitations — Clinura</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="script.js"></script>
+</head>
+<body>
+  <div class="scroll-progress"><i></i></div>
+
+  <header class="site-header wrap">
+    <a class="brand" href="index.html"><span class="brand-icon">c<span>+</span></span>clinura</a>
+    <nav>
+      <a href="index.html">Overview</a>
+      <a href="monitor.html">Monitor</a>
+      <a href="movement.html">Movement</a>
+      <a href="care.html">Care & trends</a>
+      <a class="active" href="privacy.html">Privacy</a>
+    </nav>
+    <a class="header-button" href="../">Open workspace <span>↗</span></a>
+    <button class="menu-toggle" aria-label="Toggle navigation" aria-expanded="false">☰</button>
+  </header>
+
+  <main>
+    <!-- HERO -->
+    <section class="privacy-hero wrap">
+      <div class="subhero-copy reveal">
+        <p class="eyebrow"><i></i> 04 / PRIVACY & LIMITATIONS</p>
+        <h1>Your camera.<br><em>Your computer.</em></h1>
+        <p>Clinura is designed to process camera frames locally. Understand what stays on device, what optional features send, and where camera-derived estimates need careful interpretation.</p>
+        <div class="hero-buttons">
+          <a class="button primary" href="#data-flow">Follow the data <span>↓</span></a>
+          <a class="button subtle" href="../">Open Clinura <span>↗</span></a>
+        </div>
+      </div>
+      <div class="privacy-hero-art reveal">
+        <div class="privacy-globe">
+          <div class="globe-grid"></div>
+          <div class="globe-face"><i></i><b></b><span></span></div>
+          <div class="globe-lock">⌑</div>
+          <span class="orbit-label label-local">LOCAL PROCESSING</span>
+          <span class="orbit-label label-video">VIDEO FRAMES</span>
+        </div>
+        <div class="privacy-stat"><b>ON DEVICE</b><span>Camera analysis</span></div>
+        <div class="privacy-orbit-note">Optional AI receives reading summaries only</div>
+      </div>
+    </section>
+
+    <!-- DATA FLOW -->
+    <section class="dataflow-section section-light" id="data-flow">
+      <div class="wrap">
+        <div class="section-heading light-heading reveal">
+          <div>
+            <p class="eyebrow dark-eyebrow">A CLEAR DATA FLOW</p>
+            <h2>Know what goes<br><em>where.</em></h2>
+          </div>
+          <p>Camera processing, local records and optional AI assistance have different data paths. Here is the practical distinction.</p>
+        </div>
+        <div class="dataflow-grid">
+          <article class="dataflow-card data-local reveal">
+            <span class="dataflow-num">01</span>
+            <div class="dataflow-icon">⌖</div>
+            <span class="mono">CAMERA FEED</span>
+            <h3>Processed on your computer</h3>
+            <p>Clinura captures frames from the selected camera and analyzes them locally for face tracking, pulse signals and movement. The camera feed is not uploaded to Clinura's cloud.</p>
+            <div class="dataflow-tag"><i></i> VIDEO STAYS LOCAL</div>
+          </article>
+          <article class="dataflow-card reveal" data-delay="1">
+            <span class="dataflow-num">02</span>
+            <div class="dataflow-icon">▤</div>
+            <span class="mono">LOCAL HISTORY</span>
+            <h3>Saved in your workspace</h3>
+            <p>Telemetry, notes, profile settings, exercise plans and sessions are stored in local data files on the computer running Clinura.</p>
+            <div class="dataflow-tag"><i></i> LOCAL FILES</div>
+          </article>
+          <article class="dataflow-card data-ai reveal" data-delay="2">
+            <span class="dataflow-num">03</span>
+            <div class="dataflow-icon">✳</div>
+            <span class="mono">OPTIONAL AI</span>
+            <h3>Summaries sent when used</h3>
+            <p>If configured, AI handover and question features send a summary of readings and events to the selected provider. Video frames are not included.</p>
+            <div class="dataflow-tag"><i></i> USER-ENABLED SERVICE</div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- PRINCIPLES -->
+    <section class="section-dark privacy-principles">
+      <div class="wrap principles-layout">
+        <div class="principles-copy reveal">
+          <p class="eyebrow"><i></i> DESIGNED WITH CLARITY</p>
+          <h2>Useful context.<br><em>Visible boundaries.</em></h2>
+          <p>Privacy is part of how you use the workspace. Camera access is explicit, the app shows signal quality, and summaries are separated from raw video.</p>
+        </div>
+        <div class="principles-list">
+          <article class="principle reveal">
+            <span>01</span>
+            <div><b>Camera access belongs to you</b><p>Operating-system permission settings control whether Clinura can open a camera. Close the app to stop monitoring.</p></div>
+            <i>⌖</i>
+          </article>
+          <article class="principle reveal" data-delay="1">
+            <span>02</span>
+            <div><b>Raw video remains on device</b><p>Frames are used by the live engine and preview. The app does not send camera footage to the optional AI service.</p></div>
+            <i>▣</i>
+          </article>
+          <article class="principle reveal" data-delay="2">
+            <span>03</span>
+            <div><b>AI assistance is optional</b><p>Without a provider key, handover uses a local template and AI questions are unavailable.</p></div>
+            <i>✳</i>
+          </article>
+          <article class="principle reveal" data-delay="3">
+            <span>04</span>
+            <div><b>Local data can be removed</b><p>Telemetry and athletics records live in the project's data folder. Removing those files clears the local history.</p></div>
+            <i>⌫</i>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- LIMITATIONS -->
+    <section class="limitations-section section-light">
+      <div class="wrap limitations-layout">
+        <div class="limitations-title reveal">
+          <p class="eyebrow dark-eyebrow">IMPORTANT LIMITATIONS</p>
+          <h2>Estimates need<br><em>the right context.</em></h2>
+          <p>Clinura is a research and wellness prototype, not a medical device.</p>
+        </div>
+        <div class="limitations-grid">
+          <article class="limitation reveal"><span>01 / SIGNAL</span><b>Movement and lighting matter</b><p>Motion, uneven light, camera noise, low face visibility and skin-region obstruction can weaken or bias estimates.</p></article>
+          <article class="limitation reveal" data-delay="1"><span>02 / TIMING</span><b>Readings take time</b><p>Heart rate, HRV and breathing need adequate stable data windows. A displayed value may be provisional or unavailable.</p></article>
+          <article class="limitation reveal" data-delay="2"><span>03 / HARDWARE</span><b>Devices behave differently</b><p>Camera drivers, frame rate, exposure, focus and resolution differ by device and operating system.</p></article>
+          <article class="limitation reveal" data-delay="3"><span>04 / DECISIONS</span><b>Not for diagnosis or emergencies</b><p>Do not rely on Clinura for diagnosis, treatment, medication changes or urgent decisions. Use validated medical equipment and professional guidance.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="privacy-faq section-dark">
+      <div class="wrap faq-layout">
+        <div class="reveal">
+          <p class="eyebrow"><i></i> COMMON QUESTIONS</p>
+          <h2>Clear answers.<br><em>No guesswork.</em></h2>
+        </div>
+        <div class="faq-list">
+          <details class="reveal">
+            <summary>Does Clinura upload my camera video?<i>+</i></summary>
+            <p>No. Live camera frames are processed on the computer running Clinura. Optional AI features send summaries of readings and events, not video frames.</p>
+          </details>
+          <details class="reveal" data-delay="1">
+            <summary>Where is my reading history stored?<i>+</i></summary>
+            <p>Telemetry and exercise records are stored locally in Clinura's data directory. The README describes the files and how to clear them.</p>
+          </details>
+          <details class="reveal" data-delay="2">
+            <summary>Can I use these readings as medical measurements?<i>+</i></summary>
+            <p>No. Clinura produces camera-derived estimates and is not a validated medical device. It is intended for research and wellness exploration.</p>
+          </details>
+          <details class="reveal" data-delay="3">
+            <summary>Does a better camera guarantee accurate readings?<i>+</i></summary>
+            <p>No. Image quality helps, but motion, lighting, fit, skin visibility and algorithm limits still affect the signal.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <section class="page-next">
+      <div class="wrap page-next-inner">
+        <span class="mono">BACK TO THE PLATFORM</span>
+        <a href="index.html">See the Clinura overview <b>↗</b></a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer wrap">
+    <a class="brand" href="index.html"><span class="brand-icon">c<span>+</span></span>clinura</a>
+    <span>Camera-derived estimates for informational use.</span>
+    <div><a href="privacy.html">Privacy</a><a href="../">Open workspace</a><span>© CLINURA 2026</span></div>
+  </footer>
+</body>
+</html>

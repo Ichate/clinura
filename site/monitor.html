@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#050d0c">
+  <meta name="description" content="Explore Clinura camera-based heart rate, HRV, breathing estimates and signal quality guidance.">
+  <title>Monitor — Clinura</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="script.js"></script>
+</head>
+<body>
+  <div class="scroll-progress"><i></i></div>
+
+  <header class="site-header wrap">
+    <a class="brand" href="index.html"><span class="brand-icon">c<span>+</span></span>clinura</a>
+    <nav>
+      <a href="index.html">Overview</a>
+      <a class="active" href="monitor.html">Monitor</a>
+      <a href="movement.html">Movement</a>
+      <a href="care.html">Care & trends</a>
+      <a href="privacy.html">Privacy</a>
+    </nav>
+    <a class="header-button" href="../">Open workspace <span>↗</span></a>
+    <button class="menu-toggle" aria-label="Toggle navigation" aria-expanded="false">☰</button>
+  </header>
+
+  <main>
+    <!-- SUBHERO -->
+    <section class="subhero wrap">
+      <div class="subhero-copy reveal">
+        <p class="eyebrow"><i></i> 01 / CAMERA-BASED MONITORING</p>
+        <h1>See how a<br><em>signal comes alive.</em></h1>
+        <p>Clinura estimates pulse, heart-rate variability and breathing from subtle color changes in facial skin—then shows when the camera signal is clear enough to interpret.</p>
+        <div class="hero-buttons">
+          <a class="button primary" href="../">Open the workspace <span>↗</span></a>
+          <a class="button subtle" href="#signal">Understand the signal <span>↓</span></a>
+        </div>
+      </div>
+      <div class="subhero-visual reveal">
+        <div class="monitor-showcase standalone">
+          <div class="ambient ambient-a"></div>
+          <div class="dashboard">
+            <div class="dash-top">
+              <div class="dash-brand"><span>c+</span> CLINURA <i>/ MONITOR</i></div>
+              <div class="live-status"><i></i> LIVE SESSION</div>
+              <button aria-label="More options">•••</button>
+            </div>
+            <div class="dash-grid">
+              <div class="scan-panel">
+                <div class="scan-label"><span>FACE SIGNAL</span><span class="scan-state"><i></i> TRACKING</span></div>
+                <div class="camera-view">
+                  <div class="camera-noise"></div>
+                  <div class="scan-face">
+                    <div class="face-hair"></div>
+                    <div class="face-neck"></div>
+                    <div class="face-shoulders"></div>
+                    <div class="face-shape">
+                      <div class="face-ear ear-l"></div>
+                      <div class="face-ear ear-r"></div>
+                      <div class="face-brow brow-l"></div>
+                      <div class="face-brow brow-r"></div>
+                      <div class="face-eye eye-l"><i></i></div>
+                      <div class="face-eye eye-r"><i></i></div>
+                      <div class="face-nose"></div>
+                      <div class="face-cheek cheek-l"></div>
+                      <div class="face-cheek cheek-r"></div>
+                      <div class="face-mouth"></div>
+                      <div class="face-highlight"></div>
+                    </div>
+                    <svg class="mesh" viewBox="0 0 300 370" aria-hidden="true">
+                      <path d="M54 118Q150 38 247 118M58 143Q150 82 242 143M57 167Q150 110 243 167M60 192Q150 146 240 192M64 218Q150 180 236 218M71 245Q150 216 229 245M82 273Q150 250 218 273M94 297Q150 285 206 297M70 115L83 250 118 315M230 115L217 250 182 315M150 79V327M68 165H232M63 218H237"/>
+                      <ellipse cx="150" cy="195" rx="88" ry="132"/>
+                      <ellipse cx="112" cy="168" rx="25" ry="11"/>
+                      <ellipse cx="188" cy="168" rx="25" ry="11"/>
+                      <path d="M150 164L139 215 150 223 161 215M119 250Q150 265 181 250"/>
+                    </svg>
+                    <div class="face-box"></div>
+                    <div class="scan-line"></div>
+                    <span class="scan-corner sc-tl"></span>
+                    <span class="scan-corner sc-tr"></span>
+                    <span class="scan-corner sc-bl"></span>
+                    <span class="scan-corner sc-br"></span>
+                    <span class="roi-tag roi-forehead">FOREHEAD <i></i></span>
+                    <span class="roi-tag roi-cheek">CHEEK ROI <i></i></span>
+                    <span class="tracking-point tp1"></span>
+                    <span class="tracking-point tp2"></span>
+                    <span class="tracking-point tp3"></span>
+                  </div>
+                  <div class="camera-caption"><span>CAMERA 0 · 1920 × 1080</span><span>FACE CENTERED <i>✓</i></span></div>
+                </div>
+              </div>
+              <div class="readings-panel">
+                <div class="readings-heading"><span>LIVE ESTIMATES</span><span class="readings-time">NOW</span></div>
+                <div class="reading hr-reading">
+                  <span class="reading-title"><i class="reading-dot red"></i> HEART RATE <small>●</small></span>
+                  <strong>72 <small>bpm</small></strong>
+                  <div class="wave wave-red">
+                    <svg viewBox="0 0 250 38" preserveAspectRatio="none"><path d="M0 21H30L38 20 43 8 49 32 56 18H82L90 20 95 12 101 27 107 19H134L142 20 148 7 154 31 161 19H186L194 20 200 11 207 29 213 19H250"/></svg>
+                  </div>
+                  <span class="reading-foot">Signal locked <i>GOOD</i></span>
+                </div>
+                <div class="reading-pair">
+                  <div class="reading">
+                    <span class="reading-title"><i class="reading-dot blue"></i> HRV</span>
+                    <strong>42 <small>ms</small></strong>
+                    <span class="reading-foot">RMSSD</span>
+                  </div>
+                  <div class="reading">
+                    <span class="reading-title"><i class="reading-dot teal"></i> BREATH</span>
+                    <strong>14 <small>/min</small></strong>
+                    <span class="reading-foot">Estimating</span>
+                  </div>
+                </div>
+                <div class="signal-card">
+                  <div class="signal-head"><span>SIGNAL QUALITY</span><b>GOOD</b></div>
+                  <div class="signal-meter"><i></i></div>
+                  <div class="signal-desc"><span>Face steady</span><span>Light balanced</span></div>
+                </div>
+              </div>
+            </div>
+            <div class="dash-bottom">
+              <span><i class="pulse-dot"></i> Processing locally</span>
+              <span>Frames stay on this computer</span>
+              <span class="mono">00:02:18</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SIGNAL -->
+    <section class="signal-section section-light" id="signal">
+      <div class="wrap">
+        <div class="section-heading light-heading reveal">
+          <div>
+            <p class="eyebrow dark-eyebrow">WHAT THE CAMERA SEES</p>
+            <h2>Small color changes.<br><em>Useful estimates.</em></h2>
+          </div>
+          <p>Remote photoplethysmography looks for subtle color variation across exposed skin. Clinura tracks several facial regions and checks whether the signal is usable.</p>
+        </div>
+        <div class="signal-steps">
+          <article class="signal-step reveal">
+            <span>01</span>
+            <div class="step-illustration skin-illustration"><i></i><b></b><em></em></div>
+            <h3>Find facial regions</h3>
+            <p>Face landmarks help Clinura track the forehead and cheek areas while checking pose and visibility.</p>
+          </article>
+          <article class="signal-step reveal" data-delay="1">
+            <span>02</span>
+            <div class="step-illustration pulse-illustration">
+              <svg viewBox="0 0 180 55"><path d="M0 28H28L37 27 44 8 53 48 61 25H86L95 27 102 14 111 41 118 27H146L154 26 161 7 169 45 176 27H180"/></svg>
+            </div>
+            <h3>Read changing light</h3>
+            <p>Color samples over time are filtered to look for pulse-related patterns while accounting for motion and noise.</p>
+          </article>
+          <article class="signal-step reveal" data-delay="2">
+            <span>03</span>
+            <div class="step-illustration quality-illustration">
+              <div><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+              <b>GOOD SIGNAL</b>
+            </div>
+            <h3>Show quality cues</h3>
+            <p>Lighting, stillness, face size and tracking quality affect the estimate. The interface surfaces those limits.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- DETAIL -->
+    <section class="detail-section section-dark">
+      <div class="wrap detail-grid">
+        <div class="detail-copy reveal">
+          <p class="eyebrow"><i></i> WHAT YOU CAN FOLLOW</p>
+          <h2>Three signals.<br><em>One live view.</em></h2>
+          <p>Each estimate has its own settling time and signal requirements. Treat readings as camera-derived estimates, not a diagnosis.</p>
+          <a class="inline-link light-link" href="privacy.html">Read about limitations and privacy <span>↗</span></a>
+        </div>
+        <div class="detail-cards">
+          <article class="detail-card reveal">
+            <span class="detail-kicker"><i class="reading-dot red"></i> HEART RATE</span>
+            <b>Pulse over time</b>
+            <p>Heart-rate estimate appears after the signal has accumulated enough stable data.</p>
+            <div class="detail-spark red-spark"></div>
+          </article>
+          <article class="detail-card reveal" data-delay="1">
+            <span class="detail-kicker"><i class="reading-dot blue"></i> HRV</span>
+            <b>Beat interval variation</b>
+            <p>HRV needs a longer still period and reliable beat timing to produce a useful estimate.</p>
+            <div class="detail-spark blue-spark"></div>
+          </article>
+          <article class="detail-card reveal" data-delay="2">
+            <span class="detail-kicker"><i class="reading-dot teal"></i> RESPIRATION</span>
+            <b>Breathing rhythm</b>
+            <p>Breathing is estimated from slower changes in facial color and motion patterns.</p>
+            <div class="detail-spark teal-spark"></div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- SETUP -->
+    <section class="setup-section section-light" id="setup">
+      <div class="wrap setup-layout">
+        <div class="setup-copy reveal">
+          <p class="eyebrow dark-eyebrow">SET UP FOR A GOOD SIGNAL</p>
+          <h2>Give the camera<br><em>a steady view.</em></h2>
+          <p>Small changes to lighting and camera position make a meaningful difference to signal quality.</p>
+        </div>
+        <div class="setup-list">
+          <div class="setup-item reveal"><span>01</span><b>Face a soft light</b><p>Use even light on your face. Avoid bright backlighting and flickering sources.</p></div>
+          <div class="setup-item reveal" data-delay="1"><span>02</span><b>Keep your face in frame</b><p>Sit about an arm's length away and make sure your face is large enough in the preview.</p></div>
+          <div class="setup-item reveal" data-delay="2"><span>03</span><b>Stay still while measuring</b><p>Head movement, talking and exercise can overwhelm the camera pulse signal.</p></div>
+          <div class="setup-item reveal" data-delay="3"><span>04</span><b>Allow a settling period</b><p>Pulse, HRV and respiration require several seconds to tens of seconds of usable signal.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CAMERA BAND -->
+    <section class="camera-band">
+      <div class="wrap camera-band-inner reveal">
+        <div>
+          <p class="eyebrow">CAMERA OPTIONS</p>
+          <h2>Use a camera<br><em>that fits your setup.</em></h2>
+          <p>Clinura supports cameras exposed to your computer—including compatible Android UVC webcam mode on Windows and Continuity Camera on Mac.</p>
+        </div>
+        <a class="button outline" href="../">Open Clinura <span>↗</span></a>
+      </div>
+    </section>
+
+    <!-- NOTICES -->
+    <section class="notice section-light" id="research">
+      <div class="wrap notice-inner">
+        <span class="notice-icon">i</span>
+        <div>
+          <b>Camera estimates have limitations</b>
+          <p>Clinura is a research and wellness prototype, not a medical device. Camera-derived readings can be affected by movement, lighting, skin region visibility and hardware. Do not use them to diagnose or make urgent care decisions.</p>
+        </div>
+      </div>
+    </section>
+    <section class="notice section-light" id="thermal">
+      <div class="wrap notice-inner">
+        <span class="notice-icon">⌁</span>
+        <div>
+          <b>Optional thermal camera workflows</b>
+          <p>Thermal mode is designed for compatible radiometric USB thermal cameras. A standard webcam cannot provide true temperature data.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="page-next">
+      <div class="wrap page-next-inner">
+        <span class="mono">NEXT / MOVEMENT</span>
+        <a href="movement.html">See camera-based movement tracking <b>↗</b></a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer wrap">
+    <a class="brand" href="index.html"><span class="brand-icon">c<span>+</span></span>clinura</a>
+    <span>Camera-derived estimates for informational use.</span>
+    <div><a href="privacy.html">Privacy</a><a href="../">Open workspace</a><span>© CLINURA 2026</span></div>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#050d0c">
+  <meta name="description" content="Explore Clinura session trends, event logs, care notes, handovers, wellness baselines and breathing guidance.">
+  <title>Care & trends — Clinura</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="script.js"></script>
+</head>
+<body>
+  <div class="scroll-progress"><i></i></div>
+
+  <header class="site-header wrap">
+    <a class="brand" href="index.html"><span class="brand-icon">c<span>+</span></span>clinura</a>
+    <nav>
+      <a href="index.html">Overview</a>
+      <a href="monitor.html">Monitor</a>
+      <a href="movement.html">Movement</a>
+      <a class="active" href="care.html">Care & trends</a>
+      <a href="privacy.html">Privacy</a>
+    </nav>
+    <a class="header-button" href="../">Open workspace <span>↗</span></a>
+    <button class="menu-toggle" aria-label="Toggle navigation" aria-expanded="false">☰</button>
+  </header>
+
+  <main>
+    <!-- SUBHERO -->
+    <section class="subhero care-hero wrap">
+      <div class="subhero-copy reveal">
+        <p class="eyebrow"><i></i> 03 / SESSION CONTEXT</p>
+        <h1>Read the moment.<br><em>Keep the story.</em></h1>
+        <p>Readings become more useful when you can see the timeline around them. Clinura brings session trends, notable events, personal notes and handover tools into one view.</p>
+        <div class="hero-buttons">
+          <a class="button primary" href="../">Explore care tools <span>↗</span></a>
+          <a class="button subtle" href="#handover">Explore the timeline <span>↓</span></a>
+        </div>
+      </div>
+      <div class="care-hero-art reveal">
+        <div class="care-window large-care">
+          <div class="care-top"><span>SESSION / LAST 6 HOURS</span><b>● RECORDING</b></div>
+          <div class="care-summary"><small>SESSION OVERVIEW</small><strong>Steady through the morning</strong><span>06:00 — 12:00</span></div>
+          <div class="care-chart">
+            <div class="chart-lines"></div>
+            <svg viewBox="0 0 500 100" preserveAspectRatio="none"><path d="M0 64C28 62 29 41 58 47S86 81 111 60 139 31 166 40 195 72 219 54 247 27 273 39 303 74 329 50 357 36 384 47 414 76 440 44 470 37 500 19"/></svg>
+            <span>HEART RATE · SESSION TREND</span>
+          </div>
+          <div class="care-event"><i class="mint-dot"></i><time>08:14</time><div><b>Signal stabilized</b><small>Reading quality good · Face centered</small></div><em>Good signal</em></div>
+          <div class="care-event"><i class="amber-dot"></i><time>09:32</time><div><b>Movement detected</b><small>Brief movement · Reading resumed</small></div><em>Movement</em></div>
+          <div class="care-event"><i class="blue-dot"></i><time>10:05</time><div><b>Note added</b><small>Morning medication administered</small></div><em>Care note</em></div>
+        </div>
+        <div class="care-pop">HANDOVER READY <b>6 hours</b></div>
+      </div>
+    </section>
+
+    <!-- CARE TOOLS -->
+    <section class="section-light care-story" id="handover">
+      <div class="wrap">
+        <div class="section-heading light-heading reveal">
+          <div>
+            <p class="eyebrow dark-eyebrow">FROM LIVE SESSION TO HANDOVER</p>
+            <h2>Keep the details<br><em>within reach.</em></h2>
+          </div>
+          <p>Clinura logs camera session telemetry and notable events locally. Add human context with notes, then review a selected time window.</p>
+        </div>
+        <div class="care-tools-grid">
+          <article class="care-tool reveal">
+            <span class="care-tool-num">01</span>
+            <div class="care-tool-icon">⌁</div>
+            <h3>Event timeline</h3>
+            <p>Review signal changes, movement, time out of view and other notable events in chronological order.</p>
+            <div class="tool-demo">
+              <div><i class="mint-dot"></i><span>Signal quality good</span><small>08:14</small></div>
+              <div><i class="amber-dot"></i><span>Brief movement</span><small>09:32</small></div>
+              <div><i class="blue-dot"></i><span>Care note added</span><small>10:05</small></div>
+            </div>
+          </article>
+          <article class="care-tool reveal" data-delay="1">
+            <span class="care-tool-num">02</span>
+            <div class="care-tool-icon">▤</div>
+            <h3>Handover summary</h3>
+            <p>Choose a 1, 6, 12 or 24-hour window and generate a concise summary from available events and readings.</p>
+            <div class="handover-demo">
+              <small>HANDOVER WINDOW</small>
+              <b>Last 6 hours <i>⌄</i></b>
+              <span>Readings summarized · Events included</span>
+              <button>Write handover <i>↗</i></button>
+            </div>
+          </article>
+          <article class="care-tool reveal" data-delay="2">
+            <span class="care-tool-num">03</span>
+            <div class="care-tool-icon">✎</div>
+            <h3>Notes & questions</h3>
+            <p>Add medication or care notes. Ask questions about the selected window; AI answers use a summary, not live video.</p>
+            <div class="question-demo">
+              <span>ASK CLINURA</span>
+              <p>"Were there any movement events this morning?"</p>
+              <b>2 events found · 09:32 and 11:10</b>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- TRENDS -->
+    <section class="section-dark trend-detail">
+      <div class="wrap trend-detail-grid">
+        <div class="trend-detail-copy reveal">
+          <p class="eyebrow"><i></i> TRENDS OVER TIME</p>
+          <h2>Zoom out without<br><em>losing the signal.</em></h2>
+          <p>Vitals history and signal-quality cues help you see how a session changes. Select a useful window, compare readings with events and keep the limits visible.</p>
+          <ul>
+            <li>Heart-rate trend and provisional readings</li>
+            <li>HRV and respiration history when available</li>
+            <li>Signal quality, face tracking and event context</li>
+            <li>Seven-day local telemetry history</li>
+          </ul>
+        </div>
+        <div class="trend-detail-art reveal">
+          <div class="trend-detail-window">
+            <div class="trend-label"><span>HEART RATE · TODAY</span><b>6 HOURS ⌄</b></div>
+            <strong>72 <small>bpm</small><i>Current estimate</i></strong>
+            <div class="trend-detail-chart">
+              <div class="chart-lines"></div>
+              <svg viewBox="0 0 500 180" preserveAspectRatio="none">
+                <path class="trend-fill" d="M0 118C27 113 34 82 59 92S87 143 111 112 140 67 164 79 193 128 218 101 246 55 272 72 300 132 327 88 356 72 382 90 411 142 437 81 468 70 500 34V180H0Z"/>
+                <path d="M0 118C27 113 34 82 59 92S87 143 111 112 140 67 164 79 193 128 218 101 246 55 272 72 300 132 327 88 356 72 382 90 411 142 437 81 468 70 500 34"/>
+              </svg>
+              <div class="trend-axis"><span>06:00</span><span>08:00</span><span>10:00</span><span>12:00</span></div>
+            </div>
+            <div class="trend-detail-legend"><i></i> Heart rate <span>Signal quality shown with each sample</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- WELLNESS -->
+    <section class="section-light wellness-detail" id="wellness">
+      <div class="wrap">
+        <div class="section-heading light-heading reveal">
+          <div>
+            <p class="eyebrow dark-eyebrow">WELLNESS, AT YOUR PACE</p>
+            <h2>Build a baseline.<br><em>Make time to reset.</em></h2>
+          </div>
+          <p>Small check-ins help you see personal patterns. Wellness features are designed for reflection, not diagnosis.</p>
+        </div>
+        <div class="wellness-grid">
+          <article class="wellness-card reveal">
+            <span>CHECK-IN</span>
+            <div class="wellness-number">60<small>sec</small></div>
+            <h3>A moment to measure</h3>
+            <p>Sit still for a short check-in and save resting heart rate, HRV and breathing estimates for this time of day.</p>
+            <div class="wellness-meta">BASELINE · LOCAL PROFILE</div>
+          </article>
+          <article class="wellness-card recovery-card reveal" data-delay="1">
+            <span>RECOVERY</span>
+            <div class="recovery-bars"><i style="height:35%"></i><i style="height:52%"></i><i style="height:44%"></i><i style="height:72%"></i><i style="height:58%"></i><i style="height:82%"></i><i style="height:66%"></i></div>
+            <h3>Compare with your baseline</h3>
+            <p>Recovery view places current measurements beside the baseline you saved in your profile.</p>
+            <div class="wellness-meta">PERSONAL COMPARISON</div>
+          </article>
+          <article class="wellness-card breath-card reveal" data-delay="2">
+            <span>PACED BREATHING</span>
+            <div class="breath-circle"><i></i><b>BREATHE<br>IN</b></div>
+            <h3>Follow a gentle rhythm</h3>
+            <p>A visual guide cycles through slow breaths with a five-second inhale and exhale.</p>
+            <div class="wellness-meta">5 SEC IN · 5 SEC OUT</div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- NOTE -->
+    <section class="notice-section">
+      <div class="wrap notice-inner">
+        <span class="notice-icon">i</span>
+        <div>
+          <b>Keep care decisions in the right hands</b>
+          <p>Clinura's notes and summaries organize camera-derived estimates and recorded events. They are not a substitute for clinical judgment, validated monitoring equipment or emergency care.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="page-next">
+      <div class="wrap page-next-inner">
+        <span class="mono">NEXT / PRIVACY</span>
+        <a href="privacy.html">See where camera video and data go <b>↗</b></a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer wrap">
+    <a class="brand" href="index.html"><span class="brand-icon">c<span>+</span></span>clinura</a>
+    <span>Camera-derived estimates for informational use.</span>
+    <div><a href="privacy.html">Privacy</a><a href="../">Open workspace</a><span>© CLINURA 2026</span></div>
+  </footer>
+</body>
+</html>
