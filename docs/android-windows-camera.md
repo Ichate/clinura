@@ -37,6 +37,26 @@ vendor support for the `DeviceAsWebcam` service/UVC gadget; OS version by itself
 
 ## Clinura implementation
 
-On Windows, camera enumeration and capture use DirectShow first, then Media Foundation as a fallback.
+On Windows, camera enumeration and capture try **DirectShow first, then Media Foundation** for every
+device index. A backend is only accepted once it actually delivers a frame — DirectShow can open a
+USB/UVC device and then return zero frames, which previously made the camera look "broken". Clinura
+now falls through to Media Foundation in that case, so USB webcams and Android UVC webcam mode work
+without manual configuration.
+
 These are computer-side backends; no Android app or Clinura phone component is involved for UVC.
 macOS continues using AVFoundation so iPhone Continuity Camera remains available.
+
+## Windows troubleshooting
+
+If a USB camera still does not appear or does not stream:
+
+1. **Confirm Windows sees it.** Open the built-in **Camera** app. If the device is missing there,
+   Clinura cannot capture it — fix the driver or cable first.
+2. **Check privacy settings.** Windows **Settings → Privacy & security → Camera** must allow camera
+   access and desktop app access.
+3. **Close other camera clients.** Teams, Zoom, OBS, the Camera app and browser tabs can hold the
+   device exclusively.
+4. **Try a different USB port / cable.** Prefer a direct port over a hub, and a data-capable cable.
+5. **Reconnect in webcam mode.** On Android, re-select **Webcam** in USB preferences after plugging in.
+6. **Check the log.** Clinura logs which backend opened the camera (`Camera N opened with backend …`)
+   and lists every backend it tried when opening fails.

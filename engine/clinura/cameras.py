@@ -35,8 +35,37 @@ def _system_profiler_names() -> list[str]:
     ]
 
 
+def _backends_for(system: str) -> list[int]:
+    """Backends to probe, in order. Windows needs DirectShow *and* Media Foundation."""
+    if system == "Windows":
+        return [cv2.CAP_DSHOW, cv2.CAP_MSMF]
+    if system == "Linux":
+        return [cv2.CAP_V4L2]
+    return [cv2.CAP_ANY]
+
+
+def _probe(index: int, backend: int) -> bool:
+    """True when this backend can open the index and hand back a real frame."""
+    try:
+        cap = cv2.VideoCapture(index, backend)
+    except Exception:
+        return False
+    try:
+        if not cap.isOpened():
+            return False
+        # Opening is not enough: some Windows drivers open but never deliver frames.
+        for _ in range(3):
+            ok, frame = cap.read()
+            if ok and frame is not None and getattr(frame, "size", 0):
+                return True
+        return False
+    finally:
+        cap.release()
+
+
 def list_cameras(max_index: int = 5, active: int | None = None) -> list[dict[str, object]]:
-    if platform.system() == "Darwin":
+    system = platform.system()
+    if system == "Darwin":
         names = _avfoundation_names()
         if names is None:
             names = _system_profiler_names()
@@ -47,19 +76,8 @@ def list_cameras(max_index: int = 5, active: int | None = None) -> list[dict[str
         if index == active:
             cameras.append({"index": index, "name": f"Camera {index}"})
             continue
-        system = platform.system()
-        backend = (
-            cv2.CAP_DSHOW
-            if system == "Windows"
-            else cv2.CAP_V4L2
-            if system == "Linux"
-            else cv2.CAP_ANY
-        )
-        cap = cv2.VideoCapture(index, backend)
-        if not cap.isOpened() and system == "Windows":
-            cap.release()
-            cap = cv2.VideoCapture(index, cv2.CAP_MSMF)
-        if cap.isOpened():
-            cameras.append({"index": index, "name": f"Camera {index}"})
-        cap.release()
+        for backend in _backends_for(system):
+            if _probe(index, backend):
+                cameras.append({"index": index, "name": f"Camera {index}"})
+                break
     return cameras

@@ -16,16 +16,27 @@ from .config import CaptureConfig
 logger = logging.getLogger(__name__)
 
 
-def _camera_backend() -> int:
-    """Choose the native low-latency capture backend where OpenCV provides one."""
+def _camera_backends() -> list[int]:
+    """Capture backends to try, in order, for this platform.
+
+    Windows needs more than one: DirectShow is the low-latency default, but many
+    USB/UVC devices (including Android "webcam" mode) are only exposed through
+    Media Foundation. Worse, DirectShow can *open* such a device and then deliver
+    zero frames, so a backend is only accepted once it produces a real frame.
+    """
     system = platform.system()
     if system == "Darwin":
-        return cv2.CAP_AVFOUNDATION
+        return [cv2.CAP_AVFOUNDATION]
     if system == "Windows":
-        return cv2.CAP_DSHOW
+        return [cv2.CAP_DSHOW, cv2.CAP_MSMF]
     if system == "Linux":
-        return cv2.CAP_V4L2
-    return cv2.CAP_ANY
+        return [cv2.CAP_V4L2]
+    return [cv2.CAP_ANY]
+
+
+def _camera_backend() -> int:
+    """Primary backend for this platform (kept for callers that need one)."""
+    return _camera_backends()[0]
 
 
 class CaptureError(RuntimeError):
@@ -56,36 +67,79 @@ class CameraSource:
         self._actual_height = 0
         self._actual_fps = 0.0
 
-    def start(self) -> None:
-        backend = _camera_backend()
+    def _open_backend(self, backend: int) -> cv2.VideoCapture | None:
+        """Open the configured index with one backend and apply capture settings."""
         try:
-            self._cap = cv2.VideoCapture(self.config.camera_index, backend)
-            # Some Windows camera drivers are exposed only through Media Foundation.
-            # Fall back without changing the macOS AVFoundation route.
-            if (
-                (self._cap is None or not self._cap.isOpened())
-                and platform.system() == "Windows"
-            ):
-                self._release()
-                self._cap = cv2.VideoCapture(self.config.camera_index, cv2.CAP_MSMF)
-        except Exception as exc:
-            raise CaptureError(f"Unable to open camera {self.config.camera_index}: {exc}") from exc
-        if self._cap is None or not self._cap.isOpened():
+            cap = cv2.VideoCapture(self.config.camera_index, backend)
+        except Exception:
+            logger.debug("Backend %s raised while opening camera", backend, exc_info=True)
+            return None
+        if cap is None or not cap.isOpened():
+            if cap is not None:
+                cap.release()
+            return None
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.config.width)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.config.height)
+        cap.set(cv2.CAP_PROP_FPS, self.config.fps)
+        cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+        if self.config.manual_exposure:
+            cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0.25)
+            cap.set(cv2.CAP_PROP_EXPOSURE, self.config.exposure_value)
+        return cap
+
+    def _first_frame(self, cap: cv2.VideoCapture, timeout: float) -> np.ndarray | None:
+        """Read one frame directly, tolerating the warm-up frames some drivers drop."""
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            ok, frame = cap.read()
+            if ok and frame is not None and frame.size:
+                return frame
+            time.sleep(0.02)
+        return None
+
+    def start(self) -> None:
+        # Try every backend for this platform and accept the first one that both
+        # opens *and* delivers a real frame. On Windows this is what makes USB/UVC
+        # cameras work: DirectShow may open the device but return no frames, so we
+        # must fall through to Media Foundation instead of giving up.
+        backends = _camera_backends()
+        errors: list[str] = []
+        frame: np.ndarray | None = None
+        for backend in backends:
+            cap = self._open_backend(backend)
+            if cap is None:
+                errors.append(f"backend {backend}: could not open")
+                continue
+            probe = self._first_frame(cap, timeout=max(2.0, self.config.warmup_s + 1.5))
+            if probe is None:
+                errors.append(f"backend {backend}: opened but delivered no frames")
+                try:
+                    cap.release()
+                except Exception:
+                    logger.debug("Probe release failed", exc_info=True)
+                continue
+            self._cap = cap
+            frame = probe
+            logger.info("Camera %s opened with backend %s", self.config.camera_index, backend)
+            break
+
+        if self._cap is None or frame is None:
             self._release()
             if platform.system() == "Darwin":
                 detail = "Check that no other app is using it and allow camera access in System Settings > Privacy & Security > Camera."
             elif platform.system() == "Windows":
-                detail = "Check Windows Settings > Privacy & security > Camera, enable camera access for desktop apps, and close apps using the camera."
+                detail = (
+                    "Check Windows Settings > Privacy & security > Camera, enable camera access "
+                    "for desktop apps, and close apps using the camera. For USB/UVC cameras, "
+                    "confirm the device appears in the Windows Camera app first."
+                )
             else:
                 detail = "Check camera permissions and close other apps using the camera."
-            raise CaptureError(f"Unable to open camera {self.config.camera_index}. {detail}")
-        self._cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.config.width)
-        self._cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.config.height)
-        self._cap.set(cv2.CAP_PROP_FPS, self.config.fps)
-        self._cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
-        if self.config.manual_exposure:
-            self._cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0.25)
-            self._cap.set(cv2.CAP_PROP_EXPOSURE, self.config.exposure_value)
+            tried = "; ".join(errors) if errors else "no backends available"
+            raise CaptureError(
+                f"Unable to open camera {self.config.camera_index}. {detail} (tried: {tried})"
+            )
+
         self._actual_width = int(self._cap.get(cv2.CAP_PROP_FRAME_WIDTH) or 0)
         self._actual_height = int(self._cap.get(cv2.CAP_PROP_FRAME_HEIGHT) or 0)
         self._actual_fps = float(self._cap.get(cv2.CAP_PROP_FPS) or 0.0)
@@ -103,13 +157,6 @@ class CameraSource:
         self._failed.clear()
         self._thread = threading.Thread(target=self._run, name="clinura-camera", daemon=True)
         self._thread.start()
-        try:
-            _, frame = self.read(timeout=max(2.0, self.config.warmup_s + 1.5))
-        except queue.Empty as exc:
-            self.stop()
-            raise CaptureError(
-                "The camera opened but delivered no frames. It may be in use by another app."
-            ) from exc
         self._actual_height, self._actual_width = frame.shape[:2]
         deadline = time.monotonic() + self.config.black_frame_timeout_s
         while frame_brightness(frame) < self.config.black_level:
